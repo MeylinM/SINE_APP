@@ -19,10 +19,22 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "CAMERA"
+      ],
+      "package": "com.egoitz.SENA_App"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-camera"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6fac7628-0832-49ba-abed-ee283c017445"
+      }
     }
   }
 }
