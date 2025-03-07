@@ -7,6 +7,7 @@ import {
   Alert,
   BackHandler,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -14,15 +15,15 @@ import { getCurrentDateTime } from "../utils/DateHelper";
 import { styles } from "../styles/FormStyles";
 import { DataContext } from "./DataContext"; // ✅ Importar el contexto
 
-export default function DatosQR({ route, navigation }) {
-  const { qrData } = route.params;
+export default function DatosManuales({ navigation }) {
   const { datosGuardados, setDatosGuardados } = useContext(DataContext); // 🔥 Usa el estado global
 
   // Estados del formulario
+  const [matricula, setMatricula] = useState("");
   const [almacen, setAlmacen] = useState("");
   const [otObra, setOtObra] = useState("");
   const [descripcionObra, setDescripcionObra] = useState("");
-  const [estado, setEstado] = useState("RECIBIDO");
+  const [estado, setEstado] = useState(""); // Estado se actualizará tras validar
   const [empleadoRecibido, setEmpleadoRecibido] = useState("");
   const [fechaRecibido, setFechaRecibido] = useState("");
   const [empleadoParaDevolver, setEmpleadoParaDevolver] = useState("");
@@ -30,36 +31,11 @@ export default function DatosQR({ route, navigation }) {
   const [empleadoDevuelto, setEmpleadoDevuelto] = useState("");
   const [fechaDevuelto, setFechaDevuelto] = useState("");
   const [observaciones, setObservaciones] = useState("");
+  const [validado, setValidado] = useState(false); // ✅ Controla si la matrícula ha sido validada
 
   const backHandler = useRef(null);
 
   useEffect(() => {
-    const nuevaFecha = getCurrentDateTime();
-
-    // Buscar si la matrícula ya existe en los datos guardados
-    const registroExistente = datosGuardados.find(
-      (dato) => dato.matricula === qrData
-    );
-
-    if (registroExistente) {
-      // Recuperar todos los datos previos
-      setAlmacen(registroExistente.almacen);
-      setOtObra(registroExistente.otObra);
-      setDescripcionObra(registroExistente.descripcionObra);
-      setEstado(registroExistente.estado);
-      setEmpleadoRecibido(registroExistente.empleadoRecibido);
-      setFechaRecibido(registroExistente.fechaRecibido);
-      setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver);
-      setFechaParaDevolver(registroExistente.fechaParaDevolver);
-      setEmpleadoDevuelto(registroExistente.empleadoDevuelto);
-      setFechaDevuelto(registroExistente.fechaDevuelto);
-      setObservaciones(registroExistente.observaciones);
-    } else {
-      // Si no hay datos previos, se inicia con "RECIBIDO"
-      setFechaRecibido(nuevaFecha);
-      setEstado("RECIBIDO");
-    }
-
     backHandler.current = BackHandler.addEventListener(
       "hardwareBackPress",
       () => {
@@ -67,29 +43,76 @@ export default function DatosQR({ route, navigation }) {
         return true;
       }
     );
-
     return () => backHandler.current?.remove();
-  }, [qrData, datosGuardados]);
+  }, []);
+
+  const validarMatricula = () => {
+    if (!matricula.trim()) {
+      Alert.alert("Error", "Introduce una matrícula válida.");
+      return;
+    }
+
+    const registroExistente = datosGuardados.find(
+      (dato) => dato.matricula === matricula
+    );
+
+    if (registroExistente) {
+      Alert.alert(
+        "Matrícula Encontrada",
+        "Se han cargado los datos de la matrícula existente."
+      );
+
+      // Cargar los datos en los campos
+      setAlmacen(registroExistente.almacen || "");
+      setOtObra(registroExistente.otObra || "");
+      setDescripcionObra(registroExistente.descripcionObra || "");
+      setEstado(registroExistente.estado || "RECIBIDO"); // Mantener el estado actual
+      setEmpleadoRecibido(registroExistente.empleadoRecibido || "");
+      setFechaRecibido(registroExistente.fechaRecibido || "");
+      setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver || "");
+      setFechaParaDevolver(registroExistente.fechaParaDevolver || "");
+      setEmpleadoDevuelto(registroExistente.empleadoDevuelto || "");
+      setFechaDevuelto(registroExistente.fechaDevuelto || "");
+      setObservaciones(registroExistente.observaciones || "");
+    } else {
+      Alert.alert(
+        "Nueva Matrícula",
+        "No existe un registro con esta matrícula. Se creará uno nuevo."
+      );
+      setFechaRecibido(getCurrentDateTime());
+      setEstado("RECIBIDO"); // Inicializar estado como "RECIBIDO"
+    }
+
+    setValidado(true);
+  };
 
   const handleGuardar = () => {
+    if (!validado) {
+      Alert.alert("Error", "Debes validar la matrícula antes de guardar.");
+      return;
+    }
+
     let nuevoEstado = estado;
     let nuevaFechaParaDevolver = fechaParaDevolver;
     let nuevaFechaDevuelto = fechaDevuelto;
 
+    // Lógica para cambiar el estado según el estado actual
+    // Solo cambia el estado cuando el usuario hace clic en "Guardar"
     if (estado === "RECIBIDO") {
-      nuevoEstado = "PARA DEVOLVER";
+      nuevoEstado = "PARA DEVOLVER"; // Cambiar a "PARA DEVOLVER"
       nuevaFechaParaDevolver = getCurrentDateTime();
     } else if (estado === "PARA DEVOLVER") {
-      nuevoEstado = "DEVUELTO";
+      nuevoEstado = "DEVUELTO"; // Cambiar a "DEVUELTO"
       nuevaFechaDevuelto = getCurrentDateTime();
     }
 
+    // Crear nuevo registro con los datos actualizados
     const nuevoRegistro = {
-      matricula: qrData,
+      matricula,
       almacen,
       otObra,
       descripcionObra,
-      estado: nuevoEstado,
+      estado: nuevoEstado, // Almacenar el nuevo estado
       empleadoRecibido,
       fechaRecibido,
       empleadoParaDevolver,
@@ -99,14 +122,19 @@ export default function DatosQR({ route, navigation }) {
       observaciones,
     };
 
-    const index = datosGuardados.findIndex((dato) => dato.matricula === qrData);
-    if (index !== -1) {
-      const nuevosDatos = [...datosGuardados];
-      nuevosDatos[index] = nuevoRegistro;
-      setDatosGuardados(nuevosDatos);
-    } else {
-      setDatosGuardados([...datosGuardados, nuevoRegistro]);
-    }
+    // Guardar el registro en DataContext
+    setDatosGuardados((prevDatos) => {
+      const index = prevDatos.findIndex((dato) => dato.matricula === matricula);
+      if (index !== -1) {
+        // Si ya existe, actualizarlo
+        const nuevosDatos = [...prevDatos];
+        nuevosDatos[index] = nuevoRegistro;
+        return nuevosDatos;
+      } else {
+        // Si no existe, agregarlo
+        return [...prevDatos, nuevoRegistro];
+      }
+    });
 
     navigation.navigate("Home");
   };
@@ -115,10 +143,35 @@ export default function DatosQR({ route, navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar hidden />
       <ScrollView>
-        <Text style={styles.title}>Introducción de Datos</Text>
+        <Text style={styles.title}>Introducción Manual de Datos</Text>
 
-        <Text style={styles.label}>Matrícula:</Text>
-        <Text style={styles.staticText}>{qrData}</Text>
+        {/* Campo de matrícula con botón de validación */}
+        <View style={styles.matriculaContainer}>
+          <TextInput
+            style={styles.matriculaInput}
+            placeholder="Matrícula"
+            value={matricula}
+            onChangeText={setMatricula}
+            editable={!validado}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity
+            style={[
+              styles.validateButton,
+              validado && styles.validateButtonChecked,
+            ]}
+            onPress={validarMatricula}
+          >
+            <Text
+              style={[
+                styles.validateButtonText,
+                validado && styles.validateButtonTextChecked,
+              ]}
+            >
+              {validado ? "✔" : "🔍"}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Estado:</Text>
         <Text style={styles.staticText}>{estado}</Text>
@@ -128,7 +181,7 @@ export default function DatosQR({ route, navigation }) {
           style={styles.input}
           value={almacen}
           onChangeText={setAlmacen}
-          editable={estado === "RECIBIDO"}
+          editable={validado && estado === "RECIBIDO"}
         />
 
         <Text style={styles.label}>OT Obra:</Text>
@@ -137,7 +190,7 @@ export default function DatosQR({ route, navigation }) {
           value={otObra}
           onChangeText={setOtObra}
           keyboardType="numeric"
-          editable={estado === "RECIBIDO"}
+          editable={validado && estado === "RECIBIDO"}
         />
 
         <Text style={styles.label}>Descripción Obra:</Text>
@@ -145,7 +198,7 @@ export default function DatosQR({ route, navigation }) {
           style={styles.input}
           value={descripcionObra}
           onChangeText={setDescripcionObra}
-          editable={estado === "RECIBIDO"}
+          editable={validado && estado === "RECIBIDO"}
         />
 
         <Text style={styles.label}>Información Recibido:</Text>
@@ -153,7 +206,7 @@ export default function DatosQR({ route, navigation }) {
           style={styles.input}
           value={empleadoRecibido}
           onChangeText={setEmpleadoRecibido}
-          editable={estado === "RECIBIDO"}
+          editable={validado && estado === "RECIBIDO"}
         />
         <Text style={styles.staticText}>{fechaRecibido}</Text>
 
@@ -162,7 +215,7 @@ export default function DatosQR({ route, navigation }) {
           style={styles.input}
           value={empleadoParaDevolver}
           onChangeText={setEmpleadoParaDevolver}
-          editable={estado === "PARA DEVOLVER"}
+          editable={validado && estado === "PARA DEVOLVER"}
         />
         <Text style={styles.staticText}>{fechaParaDevolver}</Text>
 
@@ -171,7 +224,7 @@ export default function DatosQR({ route, navigation }) {
           style={styles.input}
           value={empleadoDevuelto}
           onChangeText={setEmpleadoDevuelto}
-          editable={estado === "DEVUELTO"}
+          editable={validado && estado === "DEVUELTO"}
         />
         <Text style={styles.staticText}>{fechaDevuelto}</Text>
 
@@ -184,7 +237,12 @@ export default function DatosQR({ route, navigation }) {
         />
 
         <View style={styles.buttonContainer}>
-          <Button title="Guardar" onPress={handleGuardar} color="#007AFF" />
+          <Button
+            title="Guardar"
+            onPress={handleGuardar}
+            color="#007AFF"
+            disabled={!validado}
+          />
           <Button
             title="Cancelar"
             onPress={() => navigation.navigate("Home")}

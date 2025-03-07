@@ -1,31 +1,51 @@
-import React from "react";
-import { View, Text, StyleSheet, Button } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import globalStyles from "../styles/globalStyles";
+import styles from "../styles/WorkerMenuStyles"; // ✅ Mismo estilo
+import * as ScreenOrientation from "expo-screen-orientation";
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  }, []);
+
   return (
-    <SafeAreaView style={StyleSheet.absoluteFillObject}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Bienvenido a la App</Text>
-        <Button
-          title="Abrir Scanner QR"
-          onPress={() => navigation.navigate("Camara")}
-        />
-      </View>
-    </SafeAreaView>
+    <View style={globalStyles.container}>
+      <Image
+        source={require("../assets/header_menu.png")}
+        style={styles.headerImage}
+      />
+      <Text style={styles.title}>Bienvenido/a</Text>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate("Camara")}
+      >
+        <Text style={globalStyles.buttonText}>ESCANEAR QR</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate("DatosManuales")} // ✅ Ahora lleva a la pantalla correcta
+      >
+        <Text style={globalStyles.buttonText}>INTRODUCIR MANUALMENTE</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate("AllDataTable")} // ✅ El tercer botón lleva a la pantalla AllDataTable
+      >
+        <Text style={globalStyles.buttonText}>MOSTRAR TODOS LOS DATOS</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button}>
+        <Text style={globalStyles.buttonText}>MOSTRAR BOBINAS A DEVOLVER</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.footer}>SINE INGENIERIA ELECTRICA</Text>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-});

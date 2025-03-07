@@ -10,7 +10,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import Overlay from "../Overlay";
+import Overlay from "../styles/Overlay";
 
 export default function Camara({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -82,7 +82,9 @@ export default function Camara({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={StyleSheet.absoluteFillObject}>
+    <SafeAreaView
+      style={[StyleSheet.absoluteFillObject, { backgroundColor: "black" }]}
+    >
       <StatusBar hidden />
       <CameraView
         style={StyleSheet.absoluteFillObject}
