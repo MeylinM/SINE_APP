@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   Button,
-  Alert,
   BackHandler,
   ScrollView,
 } from "react-native";
@@ -16,13 +15,13 @@ import { DataContext } from "./DataContext"; // ✅ Importar el contexto
 
 export default function DatosQR({ route, navigation }) {
   const { qrData } = route.params;
-  const { datosGuardados, setDatosGuardados } = useContext(DataContext); // 🔥 Usa el estado global
+  const { datosGuardados, setDatosGuardados } = useContext(DataContext);
 
   // Estados del formulario
   const [almacen, setAlmacen] = useState("");
   const [otObra, setOtObra] = useState("");
   const [descripcionObra, setDescripcionObra] = useState("");
-  const [estado, setEstado] = useState("RECIBIDO");
+  const [estado, setEstado] = useState("");
   const [empleadoRecibido, setEmpleadoRecibido] = useState("");
   const [fechaRecibido, setFechaRecibido] = useState("");
   const [empleadoParaDevolver, setEmpleadoParaDevolver] = useState("");
@@ -41,19 +40,36 @@ export default function DatosQR({ route, navigation }) {
       (dato) => dato.matricula === qrData
     );
 
+    let nuevoEstado = "RECIBIDO"; // Estado por defecto si la matrícula no existe
+
     if (registroExistente) {
-      // Recuperar todos los datos previos
-      setAlmacen(registroExistente.almacen);
-      setOtObra(registroExistente.otObra);
-      setDescripcionObra(registroExistente.descripcionObra);
-      setEstado(registroExistente.estado);
-      setEmpleadoRecibido(registroExistente.empleadoRecibido);
-      setFechaRecibido(registroExistente.fechaRecibido);
-      setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver);
-      setFechaParaDevolver(registroExistente.fechaParaDevolver);
-      setEmpleadoDevuelto(registroExistente.empleadoDevuelto);
-      setFechaDevuelto(registroExistente.fechaDevuelto);
-      setObservaciones(registroExistente.observaciones);
+      // Determinar el siguiente estado sin guardarlo aún
+      switch (registroExistente.estado) {
+        case "RECIBIDO":
+          nuevoEstado = "PARA DEVOLVER";
+          break;
+        case "PARA DEVOLVER":
+          nuevoEstado = "DEVUELTO";
+          break;
+        case "DEVUELTO":
+          nuevoEstado = "DEVUELTO"; // No cambia más
+          break;
+        default:
+          nuevoEstado = "RECIBIDO";
+      }
+
+      // Cargar los datos en los campos
+      setAlmacen(registroExistente.almacen || "");
+      setOtObra(registroExistente.otObra || "");
+      setDescripcionObra(registroExistente.descripcionObra || "");
+      setEstado(nuevoEstado);
+      setEmpleadoRecibido(registroExistente.empleadoRecibido || "");
+      setFechaRecibido(registroExistente.fechaRecibido || "");
+      setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver || "");
+      setFechaParaDevolver(registroExistente.fechaParaDevolver || "");
+      setEmpleadoDevuelto(registroExistente.empleadoDevuelto || "");
+      setFechaDevuelto(registroExistente.fechaDevuelto || "");
+      setObservaciones(registroExistente.observaciones || "");
     } else {
       // Si no hay datos previos, se inicia con "RECIBIDO"
       setFechaRecibido(nuevaFecha);
@@ -72,30 +88,20 @@ export default function DatosQR({ route, navigation }) {
   }, [qrData, datosGuardados]);
 
   const handleGuardar = () => {
-    let nuevoEstado = estado;
-    let nuevaFechaParaDevolver = fechaParaDevolver;
-    let nuevaFechaDevuelto = fechaDevuelto;
-
-    if (estado === "RECIBIDO") {
-      nuevoEstado = "PARA DEVOLVER";
-      nuevaFechaParaDevolver = getCurrentDateTime();
-    } else if (estado === "PARA DEVOLVER") {
-      nuevoEstado = "DEVUELTO";
-      nuevaFechaDevuelto = getCurrentDateTime();
-    }
-
     const nuevoRegistro = {
       matricula: qrData,
       almacen,
       otObra,
       descripcionObra,
-      estado: nuevoEstado,
+      estado,
       empleadoRecibido,
       fechaRecibido,
       empleadoParaDevolver,
-      fechaParaDevolver: nuevaFechaParaDevolver,
+      fechaParaDevolver:
+        estado === "PARA DEVOLVER" ? getCurrentDateTime() : fechaParaDevolver,
       empleadoDevuelto,
-      fechaDevuelto: nuevaFechaDevuelto,
+      fechaDevuelto:
+        estado === "DEVUELTO" ? getCurrentDateTime() : fechaDevuelto,
       observaciones,
     };
 

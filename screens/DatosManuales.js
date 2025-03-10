@@ -16,14 +16,14 @@ import { styles } from "../styles/FormStyles";
 import { DataContext } from "./DataContext"; // ✅ Importar el contexto
 
 export default function DatosManuales({ navigation }) {
-  const { datosGuardados, setDatosGuardados } = useContext(DataContext); // 🔥 Usa el estado global
+  const { datosGuardados, setDatosGuardados } = useContext(DataContext);
 
   // Estados del formulario
   const [matricula, setMatricula] = useState("");
   const [almacen, setAlmacen] = useState("");
   const [otObra, setOtObra] = useState("");
   const [descripcionObra, setDescripcionObra] = useState("");
-  const [estado, setEstado] = useState(""); // Estado se actualizará tras validar
+  const [estado, setEstado] = useState(""); // Estado actualizado tras validación
   const [empleadoRecibido, setEmpleadoRecibido] = useState("");
   const [fechaRecibido, setFechaRecibido] = useState("");
   const [empleadoParaDevolver, setEmpleadoParaDevolver] = useState("");
@@ -31,7 +31,7 @@ export default function DatosManuales({ navigation }) {
   const [empleadoDevuelto, setEmpleadoDevuelto] = useState("");
   const [fechaDevuelto, setFechaDevuelto] = useState("");
   const [observaciones, setObservaciones] = useState("");
-  const [validado, setValidado] = useState(false); // ✅ Controla si la matrícula ha sido validada
+  const [validado, setValidado] = useState(false);
 
   const backHandler = useRef(null);
 
@@ -56,17 +56,32 @@ export default function DatosManuales({ navigation }) {
       (dato) => dato.matricula === matricula
     );
 
+    let nuevoEstado = "RECIBIDO"; // Estado por defecto si la matrícula no existe
+
     if (registroExistente) {
       Alert.alert(
         "Matrícula Encontrada",
         "Se han cargado los datos de la matrícula existente."
       );
 
-      // Cargar los datos en los campos
+      switch (registroExistente.estado) {
+        case "RECIBIDO":
+          nuevoEstado = "PARA DEVOLVER";
+          break;
+        case "PARA DEVOLVER":
+          nuevoEstado = "DEVUELTO";
+          break;
+        case "DEVUELTO":
+          nuevoEstado = "DEVUELTO"; // No cambia más
+          break;
+        default:
+          nuevoEstado = "RECIBIDO";
+      }
+
       setAlmacen(registroExistente.almacen || "");
       setOtObra(registroExistente.otObra || "");
       setDescripcionObra(registroExistente.descripcionObra || "");
-      setEstado(registroExistente.estado || "RECIBIDO"); // Mantener el estado actual
+      setEstado(nuevoEstado);
       setEmpleadoRecibido(registroExistente.empleadoRecibido || "");
       setFechaRecibido(registroExistente.fechaRecibido || "");
       setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver || "");
@@ -80,7 +95,7 @@ export default function DatosManuales({ navigation }) {
         "No existe un registro con esta matrícula. Se creará uno nuevo."
       );
       setFechaRecibido(getCurrentDateTime());
-      setEstado("RECIBIDO"); // Inicializar estado como "RECIBIDO"
+      setEstado("RECIBIDO");
     }
 
     setValidado(true);
@@ -92,46 +107,30 @@ export default function DatosManuales({ navigation }) {
       return;
     }
 
-    let nuevoEstado = estado;
-    let nuevaFechaParaDevolver = fechaParaDevolver;
-    let nuevaFechaDevuelto = fechaDevuelto;
-
-    // Lógica para cambiar el estado según el estado actual
-    // Solo cambia el estado cuando el usuario hace clic en "Guardar"
-    if (estado === "RECIBIDO") {
-      nuevoEstado = "PARA DEVOLVER"; // Cambiar a "PARA DEVOLVER"
-      nuevaFechaParaDevolver = getCurrentDateTime();
-    } else if (estado === "PARA DEVOLVER") {
-      nuevoEstado = "DEVUELTO"; // Cambiar a "DEVUELTO"
-      nuevaFechaDevuelto = getCurrentDateTime();
-    }
-
-    // Crear nuevo registro con los datos actualizados
     const nuevoRegistro = {
       matricula,
       almacen,
       otObra,
       descripcionObra,
-      estado: nuevoEstado, // Almacenar el nuevo estado
+      estado,
       empleadoRecibido,
       fechaRecibido,
       empleadoParaDevolver,
-      fechaParaDevolver: nuevaFechaParaDevolver,
+      fechaParaDevolver:
+        estado === "PARA DEVOLVER" ? getCurrentDateTime() : fechaParaDevolver,
       empleadoDevuelto,
-      fechaDevuelto: nuevaFechaDevuelto,
+      fechaDevuelto:
+        estado === "DEVUELTO" ? getCurrentDateTime() : fechaDevuelto,
       observaciones,
     };
 
-    // Guardar el registro en DataContext
     setDatosGuardados((prevDatos) => {
       const index = prevDatos.findIndex((dato) => dato.matricula === matricula);
       if (index !== -1) {
-        // Si ya existe, actualizarlo
         const nuevosDatos = [...prevDatos];
         nuevosDatos[index] = nuevoRegistro;
         return nuevosDatos;
       } else {
-        // Si no existe, agregarlo
         return [...prevDatos, nuevoRegistro];
       }
     });
@@ -145,7 +144,6 @@ export default function DatosManuales({ navigation }) {
       <ScrollView>
         <Text style={styles.title}>Introducción Manual de Datos</Text>
 
-        {/* Campo de matrícula con botón de validación */}
         <View style={styles.matriculaContainer}>
           <TextInput
             style={styles.matriculaInput}

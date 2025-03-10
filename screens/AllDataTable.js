@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { DataContext } from "./DataContext"; // Importar el contexto
 
 export default function AllDataTable() {
-  const { datosGuardados } = useContext(DataContext); // Obtener los datos desde el contexto
+  const { datosGuardados } = useContext(DataContext);
   const [estadoSeleccionado, setEstadoSeleccionado] = useState("All");
   const [matriculaBusqueda, setMatriculaBusqueda] = useState("");
   const [empleadoBusqueda, setEmpleadoBusqueda] = useState("");
@@ -41,19 +41,19 @@ export default function AllDataTable() {
     };
   }, []);
 
-  // Filtrar los datos basados en matrícula, empleado y estado
   const filteredBobinas = datosGuardados.filter((bobina) => {
     const coincideEstado =
       estadoSeleccionado === "All" || bobina.estado === estadoSeleccionado;
     const coincideMatricula = bobina.matricula.includes(matriculaBusqueda);
-
-    // Convertimos los valores a minúsculas para una búsqueda insensible a mayúsculas/minúsculas
     const textoBusqueda = empleadoBusqueda.toLowerCase();
     const coincideEmpleado =
       textoBusqueda === "" ||
-      bobina.empleadoRecibido.toLowerCase().includes(textoBusqueda) ||
-      bobina.empleadoParaDevolver.toLowerCase().includes(textoBusqueda) ||
-      bobina.empleadoDevuelto.toLowerCase().includes(textoBusqueda);
+      (bobina.empleadoRecibido &&
+        bobina.empleadoRecibido.toLowerCase().includes(textoBusqueda)) ||
+      (bobina.empleadoParaDevolver &&
+        bobina.empleadoParaDevolver.toLowerCase().includes(textoBusqueda)) ||
+      (bobina.empleadoDevuelto &&
+        bobina.empleadoDevuelto.toLowerCase().includes(textoBusqueda));
 
     return coincideEstado && coincideMatricula && coincideEmpleado;
   });
@@ -100,42 +100,21 @@ export default function AllDataTable() {
             <Text style={styles.headerCell}>ALMACÉN</Text>
             <Text style={styles.headerCell}>OT OBRA</Text>
             <Text style={styles.headerCell}>DESCRIPCIÓN OBRA</Text>
-            <View style={styles.headerGroup}>
-              <Text style={styles.headerCellBig}>INFORMACIÓN RECIBIDO</Text>
-              <View style={styles.subHeaderRow}>
-                <Text style={styles.subHeaderCell}>EMPLEADO</Text>
-                <Text style={styles.subHeaderCell}>FECHA</Text>
-              </View>
-            </View>
-            <View style={styles.headerGroup}>
-              <Text style={styles.headerCellBig}>
-                INFORMACIÓN PARA DEVOLVER
-              </Text>
-              <View style={styles.subHeaderRow}>
-                <Text style={styles.subHeaderCell}>EMPLEADO</Text>
-                <Text style={styles.subHeaderCell}>FECHA</Text>
-              </View>
-            </View>
-            <View style={styles.headerGroup}>
-              <Text style={styles.headerCellBig}>INFORMACIÓN DEVUELTO</Text>
-              <View style={styles.subHeaderRow}>
-                <Text style={styles.subHeaderCell}>EMPLEADO</Text>
-                <Text style={styles.subHeaderCell}>FECHA</Text>
-              </View>
-            </View>
+            <Text style={styles.headerCell}>INFORMACIÓN RECIBIDO</Text>
+            <Text style={styles.headerCell}>INFORMACIÓN PARA DEVOLVER</Text>
+            <Text style={styles.headerCell}>INFORMACIÓN DEVUELTO</Text>
             <Text style={styles.headerCell}>OBSERVACIONES</Text>
-            <Text style={styles.headerCell}>ESTADO</Text>{" "}
-            {/* Añadido campo Estado */}
+            <Text style={styles.headerCell}>ESTADO</Text>
           </View>
 
           {/* Renderizar las filas con datos */}
           <ScrollView style={styles.dataScroll} nestedScrollEnabled={true}>
             {filteredBobinas.map((bobina, index) => (
               <View key={index} style={styles.row}>
-                <Text style={styles.cell}>{bobina.matricula}</Text>
-                <Text style={styles.cell}>{bobina.almacen}</Text>
-                <Text style={styles.cell}>{bobina.otObra}</Text>
-                <Text style={styles.cell}>{bobina.descripcionObra}</Text>
+                <Text style={styles.cell}>{bobina.matricula || "-"}</Text>
+                <Text style={styles.cell}>{bobina.almacen || "-"}</Text>
+                <Text style={styles.cell}>{bobina.otObra || "-"}</Text>
+                <Text style={styles.cell}>{bobina.descripcionObra || "-"}</Text>
                 <Text style={styles.cell}>
                   {bobina.empleadoRecibido || "-"}
                 </Text>
@@ -150,9 +129,8 @@ export default function AllDataTable() {
                   {bobina.empleadoDevuelto || "-"}
                 </Text>
                 <Text style={styles.cell}>{bobina.fechaDevuelto || "-"}</Text>
-                <Text style={styles.cell}>{bobina.observaciones}</Text>
-                <Text style={styles.cell}>{bobina.estado}</Text>{" "}
-                {/* Mostrar el estado */}
+                <Text style={styles.cell}>{bobina.observaciones || "-"}</Text>
+                <Text style={styles.cell}>{bobina.estado || "-"}</Text>
               </View>
             ))}
           </ScrollView>
