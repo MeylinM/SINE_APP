@@ -12,7 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { getCurrentDateTime } from "../utils/DateHelper";
 import { styles } from "../styles/FormStyles";
 import { DataContext } from "./DataContext"; // ✅ Importar el contexto
-
+import { Picker } from "@react-native-picker/picker";
 export default function DatosQR({ route, navigation }) {
   const { qrData } = route.params;
   const { datosGuardados, setDatosGuardados } = useContext(DataContext);
@@ -33,32 +33,34 @@ export default function DatosQR({ route, navigation }) {
   const backHandler = useRef(null);
 
   useEffect(() => {
-    const nuevaFecha = getCurrentDateTime();
+    if (!qrData.trim()) return;
 
-    // Buscar si la matrícula ya existe en los datos guardados
+    const nuevaFecha = getCurrentDateTime();
     const registroExistente = datosGuardados.find(
       (dato) => dato.matricula === qrData
     );
 
     let nuevoEstado = "RECIBIDO"; // Estado por defecto si la matrícula no existe
+    let nuevaFechaParaDevolver = "";
+    let nuevaFechaDevuelto = "";
 
     if (registroExistente) {
-      // Determinar el siguiente estado sin guardarlo aún
       switch (registroExistente.estado) {
         case "RECIBIDO":
           nuevoEstado = "PARA DEVOLVER";
+          nuevaFechaParaDevolver = getCurrentDateTime(); // ✅ Se asigna la fecha automáticamente
           break;
         case "PARA DEVOLVER":
           nuevoEstado = "DEVUELTO";
+          nuevaFechaDevuelto = getCurrentDateTime(); // ✅ Se asigna la fecha automáticamente
           break;
         case "DEVUELTO":
-          nuevoEstado = "DEVUELTO"; // No cambia más
+          nuevoEstado = "DEVUELTO";
           break;
         default:
           nuevoEstado = "RECIBIDO";
       }
 
-      // Cargar los datos en los campos
       setAlmacen(registroExistente.almacen || "");
       setOtObra(registroExistente.otObra || "");
       setDescripcionObra(registroExistente.descripcionObra || "");
@@ -66,9 +68,13 @@ export default function DatosQR({ route, navigation }) {
       setEmpleadoRecibido(registroExistente.empleadoRecibido || "");
       setFechaRecibido(registroExistente.fechaRecibido || "");
       setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver || "");
-      setFechaParaDevolver(registroExistente.fechaParaDevolver || "");
+      setFechaParaDevolver(
+        nuevaFechaParaDevolver || registroExistente.fechaParaDevolver || ""
+      );
       setEmpleadoDevuelto(registroExistente.empleadoDevuelto || "");
-      setFechaDevuelto(registroExistente.fechaDevuelto || "");
+      setFechaDevuelto(
+        nuevaFechaDevuelto || registroExistente.fechaDevuelto || ""
+      );
       setObservaciones(registroExistente.observaciones || "");
     } else {
       // Si no hay datos previos, se inicia con "RECIBIDO"
@@ -130,21 +136,68 @@ export default function DatosQR({ route, navigation }) {
         <Text style={styles.staticText}>{estado}</Text>
 
         <Text style={styles.label}>Almacén:</Text>
-        <TextInput
-          style={styles.input}
-          value={almacen}
-          onChangeText={setAlmacen}
-          editable={estado === "RECIBIDO"}
-        />
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }} // Mantiene el diseño original
+            value={almacen}
+            onChangeText={setAlmacen} // Permite escribir manualmente
+            placeholder="Introduce o selecciona Almacén"
+            editable={estado === "RECIBIDO"} // Bloquea si no está validado
+          />
+          <Picker
+            selectedValue={
+              estado === "RECIBIDO" ? almacen || "custom" : "disabled"
+            } // Bloquea hasta validar
+            onValueChange={(itemValue) => {
+              if (itemValue !== "custom" && itemValue !== "disabled") {
+                setAlmacen(itemValue);
+              }
+            }}
+            style={{ width: 30, height: "100%" }} // Solo la flecha lateral
+            enabled={estado === "RECIBIDO"} // Bloquea el Picker hasta validar
+          >
+            <Picker.Item label="Selecciona un Almacén" value="custom" />
+            <Picker.Item label="Almacén 1" value="Almacen1" />
+            <Picker.Item label="Almacén 2" value="Almacen2" />
+          </Picker>
+        </View>
 
         <Text style={styles.label}>OT Obra:</Text>
-        <TextInput
-          style={styles.input}
-          value={otObra}
-          onChangeText={setOtObra}
-          keyboardType="numeric"
-          editable={estado === "RECIBIDO"}
-        />
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }} // Mantiene el diseño original
+            value={otObra}
+            onChangeText={(text) => {
+              // Filtra solo números
+              const numericText = text.replace(/[^0-9]/g, "");
+              setOtObra(numericText);
+            }}
+            placeholder="Introduce o selecciona OT Obra"
+            keyboardType="numeric" // Muestra teclado solo con números
+            editable={estado === "RECIBIDO"} // Bloquea si no está validado
+          />
+          <Picker
+            selectedValue={
+              estado === "RECIBIDO" ? otObra || "custom" : "disabled"
+            } // Bloquea hasta validar
+            onValueChange={(itemValue) => {
+              if (itemValue !== "custom" && itemValue !== "disabled") {
+                setOtObra(itemValue);
+              }
+            }}
+            style={{ width: 30, height: "100%" }} // Solo la flecha lateral
+            enabled={estado === "RECIBIDO"} // Bloquea el Picker hasta validar
+          >
+            <Picker.Item label="Selecciona un OT de obra" value="custom" />
+            <Picker.Item label="1001" value="1001" />
+            <Picker.Item label="1002" value="1002" />
+            <Picker.Item label="1003" value="1003" />
+          </Picker>
+        </View>
 
         <Text style={styles.label}>Descripción Obra:</Text>
         <TextInput

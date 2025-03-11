@@ -8,12 +8,15 @@ import {
   BackHandler,
   ScrollView,
   TouchableOpacity,
+  Platform,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { getCurrentDateTime } from "../utils/DateHelper";
 import { styles } from "../styles/FormStyles";
 import { DataContext } from "./DataContext"; // ✅ Importar el contexto
+import { Picker } from "@react-native-picker/picker";
 
 export default function DatosManuales({ navigation }) {
   const { datosGuardados, setDatosGuardados } = useContext(DataContext);
@@ -32,19 +35,10 @@ export default function DatosManuales({ navigation }) {
   const [fechaDevuelto, setFechaDevuelto] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [validado, setValidado] = useState(false);
+  const [showAlmacenPicker, setShowAlmacenPicker] = useState(false);
+  const [showOtObraPicker, setShowOtObraPicker] = useState(false);
 
   const backHandler = useRef(null);
-
-  useEffect(() => {
-    backHandler.current = BackHandler.addEventListener(
-      "hardwareBackPress",
-      () => {
-        navigation.goBack();
-        return true;
-      }
-    );
-    return () => backHandler.current?.remove();
-  }, []);
 
   const validarMatricula = () => {
     if (!matricula.trim()) {
@@ -57,6 +51,8 @@ export default function DatosManuales({ navigation }) {
     );
 
     let nuevoEstado = "RECIBIDO"; // Estado por defecto si la matrícula no existe
+    let nuevaFechaParaDevolver = "";
+    let nuevaFechaDevuelto = "";
 
     if (registroExistente) {
       Alert.alert(
@@ -67,9 +63,11 @@ export default function DatosManuales({ navigation }) {
       switch (registroExistente.estado) {
         case "RECIBIDO":
           nuevoEstado = "PARA DEVOLVER";
+          nuevaFechaParaDevolver = getCurrentDateTime(); // ✅ Asigna la fecha inmediatamente
           break;
         case "PARA DEVOLVER":
           nuevoEstado = "DEVUELTO";
+          nuevaFechaDevuelto = getCurrentDateTime(); // ✅ Asigna la fecha inmediatamente
           break;
         case "DEVUELTO":
           nuevoEstado = "DEVUELTO"; // No cambia más
@@ -85,9 +83,13 @@ export default function DatosManuales({ navigation }) {
       setEmpleadoRecibido(registroExistente.empleadoRecibido || "");
       setFechaRecibido(registroExistente.fechaRecibido || "");
       setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver || "");
-      setFechaParaDevolver(registroExistente.fechaParaDevolver || "");
+      setFechaParaDevolver(
+        nuevaFechaParaDevolver || registroExistente.fechaParaDevolver || ""
+      );
       setEmpleadoDevuelto(registroExistente.empleadoDevuelto || "");
-      setFechaDevuelto(registroExistente.fechaDevuelto || "");
+      setFechaDevuelto(
+        nuevaFechaDevuelto || registroExistente.fechaDevuelto || ""
+      );
       setObservaciones(registroExistente.observaciones || "");
     } else {
       Alert.alert(
@@ -100,6 +102,9 @@ export default function DatosManuales({ navigation }) {
 
     setValidado(true);
   };
+
+  const [datosGuardadosTemporalmente, setDatosGuardadosTemporalmente] =
+    useState(null);
 
   const handleGuardar = () => {
     if (!validado) {
@@ -134,9 +139,24 @@ export default function DatosManuales({ navigation }) {
         return [...prevDatos, nuevoRegistro];
       }
     });
+    setFechaParaDevolver(
+      estado === "RECIBIDO" ? getCurrentDateTime() : fechaParaDevolver
+    );
+    setFechaDevuelto(
+      estado === "PARA DEVOLVER" ? getCurrentDateTime() : fechaDevuelto
+    );
 
-    navigation.navigate("Home");
+    // Guardar el nuevo registro temporalmente y esperar a que se actualice el estado
+    setDatosGuardadosTemporalmente(nuevoRegistro);
   };
+
+  // useEffect detectará el cambio en datosGuardadosTemporalmente y navegará cuando se haya actualizado
+  useEffect(() => {
+    if (datosGuardadosTemporalmente) {
+      navigation.navigate("Home");
+      setDatosGuardadosTemporalmente(null); // Resetear para evitar múltiples navegaciones
+    }
+  }, [datosGuardadosTemporalmente]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -175,21 +195,172 @@ export default function DatosManuales({ navigation }) {
         <Text style={styles.staticText}>{estado}</Text>
 
         <Text style={styles.label}>Almacén:</Text>
-        <TextInput
-          style={styles.input}
-          value={almacen}
-          onChangeText={setAlmacen}
-          editable={validado && estado === "RECIBIDO"}
-        />
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }}
+            value={almacen}
+            onChangeText={setAlmacen}
+            placeholder="Introduce o selecciona Almacén"
+            editable={validado && estado === "RECIBIDO"}
+          />
+
+          {Platform.OS === "ios" ? (
+            <>
+              <TouchableOpacity
+                onPress={() => setShowAlmacenPicker(true)}
+                style={{ width: 30, alignItems: "center" }}
+              >
+                <Text>▼</Text>
+              </TouchableOpacity>
+
+              <Modal
+                visible={showAlmacenPicker}
+                transparent
+                animationType="slide"
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 20,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Picker
+                      selectedValue={almacen}
+                      onValueChange={(itemValue) => {
+                        setAlmacen(itemValue);
+                        setShowAlmacenPicker(false);
+                      }}
+                    >
+                      <Picker.Item
+                        label="Selecciona un Almacén"
+                        value="custom"
+                      />
+                      <Picker.Item label="Almacén 1" value="Almacen1" />
+                      <Picker.Item label="Almacén 2" value="Almacen2" />
+                    </Picker>
+                    <Button
+                      title="Cerrar"
+                      onPress={() => setShowAlmacenPicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </>
+          ) : (
+            <Picker
+              selectedValue={validado ? almacen || "custom" : "disabled"}
+              onValueChange={(itemValue) => {
+                if (itemValue !== "custom" && itemValue !== "disabled") {
+                  setAlmacen(itemValue);
+                }
+              }}
+              style={{ width: 30, height: "100%" }}
+              enabled={validado && estado === "RECIBIDO"}
+              mode="dropdown" // 🔹 Solo en Android funciona
+            >
+              <Picker.Item label="Selecciona un Almacén" value="custom" />
+              <Picker.Item label="Almacén 1" value="Almacen1" />
+              <Picker.Item label="Almacén 2" value="Almacen2" />
+            </Picker>
+          )}
+        </View>
 
         <Text style={styles.label}>OT Obra:</Text>
-        <TextInput
-          style={styles.input}
-          value={otObra}
-          onChangeText={setOtObra}
-          keyboardType="numeric"
-          editable={validado && estado === "RECIBIDO"}
-        />
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }}
+            value={otObra}
+            onChangeText={(text) => {
+              const numericText = text.replace(/[^0-9]/g, ""); // Solo permite números
+              setOtObra(numericText);
+            }}
+            placeholder="Introduce o selecciona OT Obra"
+            keyboardType="numeric"
+            editable={validado && estado === "RECIBIDO"}
+          />
+
+          {Platform.OS === "ios" ? (
+            <>
+              <TouchableOpacity
+                onPress={() => setShowOtObraPicker(true)}
+                style={{ width: 30, alignItems: "center" }}
+              >
+                <Text>▼</Text>
+              </TouchableOpacity>
+
+              <Modal
+                visible={showOtObraPicker}
+                transparent
+                animationType="slide"
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 20,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Picker
+                      selectedValue={otObra}
+                      onValueChange={(itemValue) => {
+                        setOtObra(itemValue);
+                        setShowOtObraPicker(false);
+                      }}
+                    >
+                      <Picker.Item
+                        label="Selecciona un OT de obra"
+                        value="custom"
+                      />
+                      <Picker.Item label="1001" value="1001" />
+                      <Picker.Item label="1002" value="1002" />
+                      <Picker.Item label="1003" value="1003" />
+                    </Picker>
+                    <Button
+                      title="Cerrar"
+                      onPress={() => setShowOtObraPicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </>
+          ) : (
+            <Picker
+              selectedValue={validado ? otObra || "custom" : "disabled"}
+              onValueChange={(itemValue) => {
+                if (itemValue !== "custom" && itemValue !== "disabled") {
+                  setOtObra(itemValue);
+                }
+              }}
+              style={{ width: 30, height: "100%" }}
+              enabled={validado && estado === "RECIBIDO"}
+              mode="dropdown" // 🔹 Solo en Android funciona
+            >
+              <Picker.Item label="Selecciona un OT de obra" value="custom" />
+              <Picker.Item label="1001" value="1001" />
+              <Picker.Item label="1002" value="1002" />
+              <Picker.Item label="1003" value="1003" />
+            </Picker>
+          )}
+        </View>
 
         <Text style={styles.label}>Descripción Obra:</Text>
         <TextInput

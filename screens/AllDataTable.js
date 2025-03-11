@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import globalStyles from "../styles/globalStyles";
-import styles from "../styles/bobinasStyles";
+import styles from "../styles/TableStyle";
 import * as ScreenOrientation from "expo-screen-orientation";
 import ModalSelector from "react-native-modal-selector";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,7 +43,11 @@ export default function AllDataTable() {
 
   const filteredBobinas = datosGuardados.filter((bobina) => {
     const coincideEstado =
-      estadoSeleccionado === "All" || bobina.estado === estadoSeleccionado;
+      estadoSeleccionado === "All" ||
+      (bobina.estado &&
+        bobina.estado.trim().toLowerCase() ===
+          estadoSeleccionado.toLowerCase());
+
     const coincideMatricula = bobina.matricula.includes(matriculaBusqueda);
     const textoBusqueda = empleadoBusqueda.toLowerCase();
     const coincideEmpleado =
@@ -97,14 +101,41 @@ export default function AllDataTable() {
           {/* Encabezado principal */}
           <View style={styles.headerRow}>
             <Text style={styles.headerCell}>MATRÍCULA</Text>
+            <Text style={styles.headerCell}>ESTADO</Text>
             <Text style={styles.headerCell}>ALMACÉN</Text>
             <Text style={styles.headerCell}>OT OBRA</Text>
             <Text style={styles.headerCell}>DESCRIPCIÓN OBRA</Text>
-            <Text style={styles.headerCell}>INFORMACIÓN RECIBIDO</Text>
-            <Text style={styles.headerCell}>INFORMACIÓN PARA DEVOLVER</Text>
-            <Text style={styles.headerCell}>INFORMACIÓN DEVUELTO</Text>
+
+            {/* Grupo de columnas para Información Recibido */}
+            <View style={styles.headerGroup}>
+              <Text style={styles.headerCellBig}>INFORMACIÓN RECIBIDO</Text>
+              <View style={styles.subHeaderRow}>
+                <Text style={styles.subHeaderCell}>Empleado</Text>
+                <Text style={styles.subHeaderCell}>Fecha</Text>
+              </View>
+            </View>
+
+            {/* Grupo de columnas para Información Para Devolver */}
+            <View style={styles.headerGroup}>
+              <Text style={styles.headerCellBig}>
+                INFORMACIÓN PARA DEVOLVER
+              </Text>
+              <View style={styles.subHeaderRow}>
+                <Text style={styles.subHeaderCell}>Empleado</Text>
+                <Text style={styles.subHeaderCell}>Fecha</Text>
+              </View>
+            </View>
+
+            {/* Grupo de columnas para Información Devuelto */}
+            <View style={styles.headerGroup}>
+              <Text style={styles.headerCellBig}>INFORMACIÓN DEVUELTO</Text>
+              <View style={styles.subHeaderRow}>
+                <Text style={styles.subHeaderCell}>Empleado</Text>
+                <Text style={styles.subHeaderCell}>Fecha</Text>
+              </View>
+            </View>
+
             <Text style={styles.headerCell}>OBSERVACIONES</Text>
-            <Text style={styles.headerCell}>ESTADO</Text>
           </View>
 
           {/* Renderizar las filas con datos */}
@@ -112,6 +143,7 @@ export default function AllDataTable() {
             {filteredBobinas.map((bobina, index) => (
               <View key={index} style={styles.row}>
                 <Text style={styles.cell}>{bobina.matricula || "-"}</Text>
+                <Text style={styles.cell}>{bobina.estado || "-"}</Text>
                 <Text style={styles.cell}>{bobina.almacen || "-"}</Text>
                 <Text style={styles.cell}>{bobina.otObra || "-"}</Text>
                 <Text style={styles.cell}>{bobina.descripcionObra || "-"}</Text>
@@ -130,7 +162,6 @@ export default function AllDataTable() {
                 </Text>
                 <Text style={styles.cell}>{bobina.fechaDevuelto || "-"}</Text>
                 <Text style={styles.cell}>{bobina.observaciones || "-"}</Text>
-                <Text style={styles.cell}>{bobina.estado || "-"}</Text>
               </View>
             ))}
           </ScrollView>
