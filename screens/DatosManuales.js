@@ -37,7 +37,12 @@ export default function DatosManuales({ navigation }) {
   const [validado, setValidado] = useState(false);
   const [showAlmacenPicker, setShowAlmacenPicker] = useState(false);
   const [showOtObraPicker, setShowOtObraPicker] = useState(false);
-
+  const [showEmpleadoRecibidoPicker, setShowEmpleadoRecibidoPicker] =
+    useState(false);
+  const [showEmpleadoParaDevolverPicker, setShowEmpleadoParaDevolverPicker] =
+    useState(false);
+  const [showEmpleadoDevueltoPicker, setShowEmpleadoDevueltoPicker] =
+    useState(false);
   const backHandler = useRef(null);
 
   const validarMatricula = () => {
@@ -371,30 +376,237 @@ export default function DatosManuales({ navigation }) {
         />
 
         <Text style={styles.label}>Información Recibido:</Text>
-        <TextInput
-          style={styles.input}
-          value={empleadoRecibido}
-          onChangeText={setEmpleadoRecibido}
-          editable={validado && estado === "RECIBIDO"}
-        />
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }}
+            value={empleadoRecibido}
+            onChangeText={setEmpleadoRecibido}
+            placeholder="Introduce o selecciona Empleado Recibido"
+            editable={validado && estado === "RECIBIDO"}
+          />
+          {Platform.OS === "ios" ? (
+            <>
+              <TouchableOpacity
+                onPress={() => setShowEmpleadoRecibidoPicker(true)}
+                style={{ width: 30, alignItems: "center" }}
+              >
+                <Text>▼</Text>
+              </TouchableOpacity>
+              <Modal
+                visible={showEmpleadoRecibidoPicker}
+                transparent
+                animationType="slide"
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 20,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Picker
+                      selectedValue={empleadoRecibido}
+                      onValueChange={(itemValue) => {
+                        setEmpleadoRecibido(itemValue);
+                        setShowEmpleadoRecibidoPicker(false);
+                      }}
+                    >
+                      <Picker.Item label="Selecciona un Empleado" value="" />
+                      <Picker.Item label="Juan Pérez" value="JuanPerez" />
+                      <Picker.Item label="María García" value="MariaGarcia" />
+                      <Picker.Item
+                        label="Carlos Rodríguez"
+                        value="CarlosRodriguez"
+                      />
+                    </Picker>
+                    <Button
+                      title="Cerrar"
+                      onPress={() => setShowEmpleadoRecibidoPicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </>
+          ) : (
+            <Picker
+              selectedValue={empleadoRecibido}
+              onValueChange={setEmpleadoRecibido}
+              style={{ width: 30, height: "100%" }}
+              enabled={validado && estado === "RECIBIDO"}
+              mode="dropdown"
+            >
+              <Picker.Item label="Selecciona un Empleado" value="" />
+              <Picker.Item label="Juan Pérez" value="JuanPerez" />
+              <Picker.Item label="María García" value="MariaGarcia" />
+              <Picker.Item label="Carlos Rodríguez" value="CarlosRodriguez" />
+            </Picker>
+          )}
+        </View>
         <Text style={styles.staticText}>{fechaRecibido}</Text>
 
         <Text style={styles.label}>Información Para Devolver:</Text>
-        <TextInput
-          style={styles.input}
-          value={empleadoParaDevolver}
-          onChangeText={setEmpleadoParaDevolver}
-          editable={validado && estado === "PARA DEVOLVER"}
-        />
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }}
+            value={empleadoParaDevolver}
+            onChangeText={setEmpleadoParaDevolver}
+            placeholder="Introduce o selecciona Empleado Para Devolver"
+            editable={validado && estado === "PARA DEVOLVER"}
+          />
+          {Platform.OS === "ios" ? (
+            <>
+              <TouchableOpacity
+                onPress={() => setShowEmpleadoParaDevolverPicker(true)}
+                style={{ width: 30, alignItems: "center" }}
+              >
+                <Text>▼</Text>
+              </TouchableOpacity>
+              <Modal
+                visible={showEmpleadoParaDevolverPicker}
+                transparent
+                animationType="slide"
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 20,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Picker
+                      selectedValue={empleadoParaDevolver}
+                      onValueChange={(itemValue) => {
+                        setEmpleadoParaDevolver(itemValue);
+                        setShowEmpleadoParaDevolverPicker(false);
+                      }}
+                    >
+                      <Picker.Item label="Selecciona un Empleado" value="" />
+                      <Picker.Item label="Juan Pérez" value="JuanPerez" />
+                      <Picker.Item label="María García" value="MariaGarcia" />
+                      <Picker.Item
+                        label="Carlos Rodríguez"
+                        value="CarlosRodriguez"
+                      />
+                    </Picker>
+                    <Button
+                      title="Cerrar"
+                      onPress={() => setShowEmpleadoParaDevolverPicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </>
+          ) : (
+            <Picker
+              selectedValue={empleadoParaDevolver}
+              onValueChange={setEmpleadoParaDevolver}
+              style={{ width: 30, height: "100%" }}
+              enabled={validado && estado === "PARA DEVOLVER"}
+              mode="dropdown"
+            >
+              <Picker.Item label="Selecciona un Empleado" value="" />
+              <Picker.Item label="Juan Pérez" value="JuanPerez" />
+              <Picker.Item label="María García" value="MariaGarcia" />
+              <Picker.Item label="Carlos Rodríguez" value="CarlosRodriguez" />
+            </Picker>
+          )}
+        </View>
         <Text style={styles.staticText}>{fechaParaDevolver}</Text>
 
         <Text style={styles.label}>Información Devuelto:</Text>
-        <TextInput
-          style={styles.input}
-          value={empleadoDevuelto}
-          onChangeText={setEmpleadoDevuelto}
-          editable={validado && estado === "DEVUELTO"}
-        />
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }}
+            value={empleadoDevuelto}
+            onChangeText={setEmpleadoDevuelto}
+            placeholder="Introduce o selecciona Empleado Devuelto"
+            editable={validado && estado === "DEVUELTO"}
+          />
+          {Platform.OS === "ios" ? (
+            <>
+              <TouchableOpacity
+                onPress={() => setShowEmpleadoDevueltoPicker(true)}
+                style={{ width: 30, alignItems: "center" }}
+              >
+                <Text>▼</Text>
+              </TouchableOpacity>
+              <Modal
+                visible={showEmpleadoDevueltoPicker}
+                transparent
+                animationType="slide"
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 20,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Picker
+                      selectedValue={empleadoDevuelto}
+                      onValueChange={(itemValue) => {
+                        setEmpleadoDevuelto(itemValue);
+                        setShowEmpleadoDevueltoPicker(false);
+                      }}
+                    >
+                      <Picker.Item label="Selecciona un Empleado" value="" />
+                      <Picker.Item label="Juan Pérez" value="JuanPerez" />
+                      <Picker.Item label="María García" value="MariaGarcia" />
+                      <Picker.Item
+                        label="Carlos Rodríguez"
+                        value="CarlosRodriguez"
+                      />
+                    </Picker>
+                    <Button
+                      title="Cerrar"
+                      onPress={() => setShowEmpleadoDevueltoPicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </>
+          ) : (
+            <Picker
+              selectedValue={empleadoDevuelto}
+              onValueChange={setEmpleadoDevuelto}
+              style={{ width: 30, height: "100%" }}
+              enabled={validado && estado === "DEVUELTO"}
+              mode="dropdown"
+            >
+              <Picker.Item label="Selecciona un Empleado" value="" />
+              <Picker.Item label="Juan Pérez" value="JuanPerez" />
+              <Picker.Item label="María García" value="MariaGarcia" />
+              <Picker.Item label="Carlos Rodríguez" value="CarlosRodriguez" />
+            </Picker>
+          )}
+        </View>
         <Text style={styles.staticText}>{fechaDevuelto}</Text>
 
         <Text style={styles.label}>Observaciones:</Text>

@@ -47,7 +47,6 @@ export default function AllDataTable() {
       (bobina.estado &&
         bobina.estado.trim().toLowerCase() ===
           estadoSeleccionado.toLowerCase());
-
     const coincideMatricula = bobina.matricula.includes(matriculaBusqueda);
     const textoBusqueda = empleadoBusqueda.toLowerCase();
     const coincideEmpleado =
