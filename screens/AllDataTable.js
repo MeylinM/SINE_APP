@@ -6,15 +6,16 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import globalStyles from "../styles/globalStyles";
+
 import styles from "../styles/TableStyle";
 import * as ScreenOrientation from "expo-screen-orientation";
 import ModalSelector from "react-native-modal-selector";
 import { Ionicons } from "@expo/vector-icons";
-import { DataContext } from "./DataContext"; // Importar el contexto
+import { obtenerHistorialProductos } from "../services/HistorialServices";
 
 export default function AllDataTable() {
-  const { datosGuardados } = useContext(DataContext);
+  const [historialProductos, setHistorialProductos] = useState([]);
+
   const [estadoSeleccionado, setEstadoSeleccionado] = useState("All");
   const [matriculaBusqueda, setMatriculaBusqueda] = useState("");
   const [empleadoBusqueda, setEmpleadoBusqueda] = useState("");
@@ -34,6 +35,20 @@ export default function AllDataTable() {
     };
     cambiarOrientacion();
 
+    // Cargar datos de la base de datos
+    const cargarDatos = async () => {
+      try {
+        console.log("🔹 Cargando historial de productos...");
+        const historialDB = await obtenerHistorialProductos();
+        setHistorialProductos(historialDB);
+        console.log("✅ Datos cargados correctamente.");
+      } catch (error) {
+        console.error("❌ Error al obtener historial de productos:", error);
+      }
+    };
+
+    cargarDatos();
+
     return () => {
       ScreenOrientation.lockAsync(
         ScreenOrientation.OrientationLock.PORTRAIT_UP
@@ -41,7 +56,7 @@ export default function AllDataTable() {
     };
   }, []);
 
-  const filteredBobinas = datosGuardados.filter((bobina) => {
+  const filteredBobinas = historialProductos.filter((bobina) => {
     const coincideEstado =
       estadoSeleccionado === "All" ||
       (bobina.estado &&
@@ -141,25 +156,17 @@ export default function AllDataTable() {
           <ScrollView style={styles.dataScroll} nestedScrollEnabled={true}>
             {filteredBobinas.map((bobina, index) => (
               <View key={index} style={styles.row}>
-                <Text style={styles.cell}>{bobina.matricula || "-"}</Text>
-                <Text style={styles.cell}>{bobina.estado || "-"}</Text>
-                <Text style={styles.cell}>{bobina.almacen || "-"}</Text>
-                <Text style={styles.cell}>{bobina.otObra || "-"}</Text>
-                <Text style={styles.cell}>{bobina.descripcionObra || "-"}</Text>
+                <Text style={styles.cell}>{bobina.nombre_almacen || "-"}</Text>
+                <Text style={styles.cell}>{bobina.ot || "-"}</Text>
                 <Text style={styles.cell}>
-                  {bobina.empleadoRecibido || "-"}
+                  {bobina.descripcion_obra || "-"}
                 </Text>
-                <Text style={styles.cell}>{bobina.fechaRecibido || "-"}</Text>
-                <Text style={styles.cell}>
-                  {bobina.empleadoParaDevolver || "-"}
-                </Text>
-                <Text style={styles.cell}>
-                  {bobina.fechaParaDevolver || "-"}
-                </Text>
-                <Text style={styles.cell}>
-                  {bobina.empleadoDevuelto || "-"}
-                </Text>
-                <Text style={styles.cell}>{bobina.fechaDevuelto || "-"}</Text>
+                <Text style={styles.cell}>{bobina.empleado1 || "-"}</Text>
+                <Text style={styles.cell}>{bobina.fecha1 || "-"}</Text>
+                <Text style={styles.cell}>{bobina.empleado2 || "-"}</Text>
+                <Text style={styles.cell}>{bobina.fecha2 || "-"}</Text>
+                <Text style={styles.cell}>{bobina.empleado3 || "-"}</Text>
+                <Text style={styles.cell}>{bobina.fecha3 || "-"}</Text>
                 <Text style={styles.cell}>{bobina.observaciones || "-"}</Text>
               </View>
             ))}

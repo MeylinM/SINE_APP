@@ -17,6 +17,14 @@ import { getCurrentDateTime } from "../utils/DateHelper";
 import { styles } from "../styles/FormStyles";
 import { DataContext } from "./DataContext"; // ✅ Importar el contexto
 import { Picker } from "@react-native-picker/picker";
+import { obtenerAlmacenes } from "../services/AlmacenesServices";
+import { obtenerOtObras } from "../services/ObraServices";
+import { obtenerEmpleados } from "../services/EmpleadoServices";
+import {
+  obtenerProductoPorMatricula,
+  actualizarProducto,
+} from "../services/ProductoServices";
+import { registrarUsuarioProducto } from "../services/UsuarioRegistroServices";
 
 export default function DatosManuales({ navigation }) {
   const { datosGuardados, setDatosGuardados } = useContext(DataContext);
@@ -44,115 +52,234 @@ export default function DatosManuales({ navigation }) {
   const [showEmpleadoDevueltoPicker, setShowEmpleadoDevueltoPicker] =
     useState(false);
   const backHandler = useRef(null);
+  const [almacenes, setAlmacenes] = useState([]);
+  const [otObras, setOtObras] = useState([]);
+  const [empleados, setEmpleados] = useState([]);
 
-  const validarMatricula = () => {
+  const validarMatricula = async () => {
     if (!matricula.trim()) {
       Alert.alert("Error", "Introduce una matrícula válida.");
       return;
     }
 
-    const registroExistente = datosGuardados.find(
-      (dato) => dato.matricula === matricula
-    );
+    try {
+      // **Cargar datos de la API**
+      const almacenesDB = await obtenerAlmacenes();
+      const otObrasDB = await obtenerOtObras();
+      const empleadosDB = await obtenerEmpleados();
 
-    let nuevoEstado = "RECIBIDO"; // Estado por defecto si la matrícula no existe
-    let nuevaFechaParaDevolver = "";
-    let nuevaFechaDevuelto = "";
+      setAlmacenes(almacenesDB);
+      setOtObras(otObrasDB);
+      setEmpleados(empleadosDB);
 
-    if (registroExistente) {
-      Alert.alert(
-        "Matrícula Encontrada",
-        "Se han cargado los datos de la matrícula existente."
-      );
+      // **Buscar la matrícula en la BD**
+      const producto = await obtenerProductoPorMatricula(matricula);
 
-      switch (registroExistente.estado) {
-        case "RECIBIDO":
-          nuevoEstado = "PARA DEVOLVER";
-          nuevaFechaParaDevolver = getCurrentDateTime(); // ✅ Asigna la fecha inmediatamente
-          break;
-        case "PARA DEVOLVER":
-          nuevoEstado = "DEVUELTO";
-          nuevaFechaDevuelto = getCurrentDateTime(); // ✅ Asigna la fecha inmediatamente
-          break;
-        case "DEVUELTO":
-          nuevoEstado = "DEVUELTO"; // No cambia más
-          break;
-        default:
-          nuevoEstado = "RECIBIDO";
+      let nuevoEstado = "RECIBIDO";
+      let nuevaFechaParaDevolver = "";
+      let nuevaFechaDevuelto = "";
+
+      if (producto) {
+        switch (producto.estado) {
+          case "RECIBIDO":
+            nuevoEstado = "PARA DEVOLVER";
+            nuevaFechaParaDevolver = getCurrentDateTime();
+            break;
+          case "PARA DEVOLVER":
+            nuevoEstado = "DEVUELTO";
+            nuevaFechaDevuelto = getCurrentDateTime();
+            break;
+          case "DEVUELTO":
+            nuevoEstado = "DEVUELTO";
+            break;
+          default:
+            nuevoEstado = "RECIBIDO";
+        }
+
+        setAlmacen(producto.ID_Almacen || "");
+        setOtObra(producto.ID_Obra || "");
+        setDescripcionObra(producto.descripcion || "");
+        setEstado(nuevoEstado);
+        setEmpleadoRecibido(producto.empleadoRecibido || "");
+        setFechaRecibido(producto.fechaRecibido || "");
+        setEmpleadoParaDevolver(producto.empleadoParaDevolver || "");
+        setFechaParaDevolver(
+          nuevaFechaParaDevolver || producto.fechaParaDevolver || ""
+        );
+        setEmpleadoDevuelto(producto.empleadoDevuelto || "");
+        setFechaDevuelto(nuevaFechaDevuelto || producto.fechaDevuelto || "");
+        setObservaciones(producto.observaciones || "");
+      } else {
+        setFechaRecibido(getCurrentDateTime());
+        setEstado("RECIBIDO");
       }
 
-      setAlmacen(registroExistente.almacen || "");
-      setOtObra(registroExistente.otObra || "");
-      setDescripcionObra(registroExistente.descripcionObra || "");
-      setEstado(nuevoEstado);
-      setEmpleadoRecibido(registroExistente.empleadoRecibido || "");
-      setFechaRecibido(registroExistente.fechaRecibido || "");
-      setEmpleadoParaDevolver(registroExistente.empleadoParaDevolver || "");
-      setFechaParaDevolver(
-        nuevaFechaParaDevolver || registroExistente.fechaParaDevolver || ""
-      );
-      setEmpleadoDevuelto(registroExistente.empleadoDevuelto || "");
-      setFechaDevuelto(
-        nuevaFechaDevuelto || registroExistente.fechaDevuelto || ""
-      );
-      setObservaciones(registroExistente.observaciones || "");
-    } else {
+      setValidado(true);
+    } catch (error) {
       Alert.alert(
-        "Nueva Matrícula",
-        "No existe un registro con esta matrícula. Se creará uno nuevo."
+        "Error",
+        "No se pudo cargar la información desde la base de datos."
       );
-      setFechaRecibido(getCurrentDateTime());
-      setEstado("RECIBIDO");
     }
-
-    setValidado(true);
   };
 
   const [datosGuardadosTemporalmente, setDatosGuardadosTemporalmente] =
     useState(null);
 
-  const handleGuardar = () => {
+  const handleGuardar = async () => {
     if (!validado) {
       Alert.alert("Error", "Debes validar la matrícula antes de guardar.");
       return;
     }
 
-    const nuevoRegistro = {
-      matricula,
-      almacen,
-      otObra,
-      descripcionObra,
-      estado,
-      empleadoRecibido,
-      fechaRecibido,
-      empleadoParaDevolver,
-      fechaParaDevolver:
-        estado === "PARA DEVOLVER" ? getCurrentDateTime() : fechaParaDevolver,
-      empleadoDevuelto,
-      fechaDevuelto:
-        estado === "DEVUELTO" ? getCurrentDateTime() : fechaDevuelto,
-      observaciones,
-    };
+    const fecha = getCurrentDateTime(); // Obtener la fecha actual
 
-    setDatosGuardados((prevDatos) => {
-      const index = prevDatos.findIndex((dato) => dato.matricula === matricula);
-      if (index !== -1) {
-        const nuevosDatos = [...prevDatos];
-        nuevosDatos[index] = nuevoRegistro;
-        return nuevosDatos;
-      } else {
-        return [...prevDatos, nuevoRegistro];
+    try {
+      console.log("🔹 Iniciando proceso de guardado...");
+      console.log("🔹 Matricula:", matricula);
+      console.log("🔹 Estado:", estado);
+      console.log("🔹 Observaciones:", observaciones);
+      console.log("🔹 Almacén ingresado:", almacen);
+      console.log("🔹 OT Obra ingresada:", otObra);
+
+      let idObra = null;
+      let idAlmacen = null;
+
+      // **1. Verificar si la OT Obra ya existe en la tabla `Obra`**
+      if (otObra.trim() !== "") {
+        const obrasDB = await obtenerOtObras();
+        const obraExistente = obrasDB.find((obra) => obra.ot === otObra);
+
+        if (!obraExistente) {
+          console.log(
+            `⚡ Agregando nueva obra: OT ${otObra}, Descripción: ${descripcionObra}`
+          );
+          idObra = await agregarObra(otObra, descripcionObra);
+          if (!idObra) {
+            Alert.alert(
+              "Error",
+              "No se pudo registrar la obra en la base de datos."
+            );
+            return;
+          }
+        } else {
+          idObra = obraExistente.ot;
+        }
       }
-    });
-    setFechaParaDevolver(
-      estado === "RECIBIDO" ? getCurrentDateTime() : fechaParaDevolver
-    );
-    setFechaDevuelto(
-      estado === "PARA DEVOLVER" ? getCurrentDateTime() : fechaDevuelto
-    );
 
-    // Guardar el nuevo registro temporalmente y esperar a que se actualice el estado
-    setDatosGuardadosTemporalmente(nuevoRegistro);
+      // **2. Verificar si el Almacén ya existe en la tabla `Almacén`**
+      if (almacen.trim() !== "") {
+        const almacenesDB = await obtenerAlmacenes();
+        const almacenExistente = almacenesDB.find(
+          (alm) => alm.nombre === almacen
+        );
+
+        if (!almacenExistente) {
+          console.log(`⚡ Agregando nuevo almacén: ${almacen}`);
+          idAlmacen = await agregarAlmacen(almacen);
+          if (!idAlmacen) {
+            Alert.alert(
+              "Error",
+              "No se pudo registrar el almacén en la base de datos."
+            );
+            return;
+          }
+        } else {
+          idAlmacen = almacenExistente.id;
+        }
+      }
+
+      console.log("✅ IDs después de validación:");
+      console.log("   - ID Almacén:", idAlmacen);
+      console.log("   - ID Obra:", idObra);
+
+      // **3. Verificar si el Producto ya existe en la BD antes de actualizar**
+      const productoExistente = await obtenerProductoPorMatricula(matricula);
+      if (!productoExistente) {
+        console.log(`⚡ Insertando nuevo producto: ${matricula}`);
+        const productoInsertado = await agregarProducto(
+          matricula,
+          observaciones,
+          idAlmacen,
+          idObra
+        );
+        if (!productoInsertado) {
+          Alert.alert(
+            "Error",
+            "No se pudo registrar el producto en la base de datos."
+          );
+          return;
+        }
+      } else {
+        console.log(
+          "✅ Producto ya existe en la base de datos, solo se actualizará."
+        );
+      }
+
+      // **4. Actualizar la tabla `Producto`**
+      console.log("📌 Actualizando producto en la base de datos...");
+      const productoActualizado = await actualizarProducto(
+        matricula,
+        estado,
+        observaciones,
+        idAlmacen,
+        idObra
+      );
+
+      if (!productoActualizado) {
+        Alert.alert("Error", "No se pudo actualizar el producto.");
+        return;
+      }
+
+      console.log("✅ Producto actualizado correctamente.");
+
+      // **5. Registrar la acción en `UsuarioProducto`**
+      let empleadoID = null;
+      let registroTipo = "";
+
+      if (estado === "RECIBIDO") {
+        empleadoID = empleadoRecibido;
+        registroTipo = "RECIBIDO";
+      } else if (estado === "PARA DEVOLVER") {
+        empleadoID = empleadoParaDevolver;
+        registroTipo = "PARA DEVOLVER";
+      } else if (estado === "DEVUELTO") {
+        empleadoID = empleadoDevuelto;
+        registroTipo = "DEVUELTO";
+      }
+
+      if (empleadoID) {
+        console.log("📌 Registrando en UsuarioProducto...");
+        console.log("   - Empleado ID:", empleadoID);
+        console.log("   - Matricula:", matricula);
+        console.log("   - Tipo de registro:", registroTipo);
+        console.log("   - Fecha:", fecha);
+
+        const usuarioProductoGuardado = await registrarUsuarioProducto(
+          empleadoID,
+          matricula,
+          registroTipo,
+          fecha
+        );
+
+        if (!usuarioProductoGuardado) {
+          Alert.alert("Error", "No se pudo registrar la acción del empleado.");
+          return;
+        }
+      }
+
+      Alert.alert(
+        "✅ Éxito",
+        "Datos guardados correctamente en la base de datos."
+      );
+      navigation.navigate("Home");
+    } catch (error) {
+      console.error("❌ Error al guardar:", error);
+      Alert.alert(
+        "Error",
+        "Ocurrió un problema al guardar en la base de datos."
+      );
+    }
   };
 
   // useEffect detectará el cambio en datosGuardadosTemporalmente y navegará cuando se haya actualizado
@@ -219,7 +346,6 @@ export default function DatosManuales({ navigation }) {
               >
                 <Text>▼</Text>
               </TouchableOpacity>
-
               <Modal
                 visible={showAlmacenPicker}
                 transparent
@@ -250,8 +376,13 @@ export default function DatosManuales({ navigation }) {
                         label="Selecciona un Almacén"
                         value="custom"
                       />
-                      <Picker.Item label="Almacén 1" value="Almacen1" />
-                      <Picker.Item label="Almacén 2" value="Almacen2" />
+                      {almacenes.map((item) => (
+                        <Picker.Item
+                          key={item.id}
+                          label={item.nombre}
+                          value={item.id}
+                        />
+                      ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -271,11 +402,16 @@ export default function DatosManuales({ navigation }) {
               }}
               style={{ width: 30, height: "100%" }}
               enabled={validado && estado === "RECIBIDO"}
-              mode="dropdown" // 🔹 Solo en Android funciona
+              mode="dropdown"
             >
               <Picker.Item label="Selecciona un Almacén" value="custom" />
-              <Picker.Item label="Almacén 1" value="Almacen1" />
-              <Picker.Item label="Almacén 2" value="Almacen2" />
+              {almacenes.map((item) => (
+                <Picker.Item
+                  key={item.id}
+                  label={item.nombre}
+                  value={item.id}
+                />
+              ))}
             </Picker>
           )}
         </View>
@@ -304,7 +440,6 @@ export default function DatosManuales({ navigation }) {
               >
                 <Text>▼</Text>
               </TouchableOpacity>
-
               <Modal
                 visible={showOtObraPicker}
                 transparent
@@ -332,12 +467,16 @@ export default function DatosManuales({ navigation }) {
                       }}
                     >
                       <Picker.Item
-                        label="Selecciona un OT de obra"
+                        label="Selecciona una OT de obra"
                         value="custom"
                       />
-                      <Picker.Item label="1001" value="1001" />
-                      <Picker.Item label="1002" value="1002" />
-                      <Picker.Item label="1003" value="1003" />
+                      {otObras.map((item) => (
+                        <Picker.Item
+                          key={item.ot}
+                          label={item.descripcion}
+                          value={item.ot}
+                        />
+                      ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -357,12 +496,16 @@ export default function DatosManuales({ navigation }) {
               }}
               style={{ width: 30, height: "100%" }}
               enabled={validado && estado === "RECIBIDO"}
-              mode="dropdown" // 🔹 Solo en Android funciona
+              mode="dropdown"
             >
-              <Picker.Item label="Selecciona un OT de obra" value="custom" />
-              <Picker.Item label="1001" value="1001" />
-              <Picker.Item label="1002" value="1002" />
-              <Picker.Item label="1003" value="1003" />
+              <Picker.Item label="Selecciona una OT de obra" value="custom" />
+              {otObras.map((item) => (
+                <Picker.Item
+                  key={item.ot}
+                  label={item.descripcion}
+                  value={item.ot}
+                />
+              ))}
             </Picker>
           )}
         </View>
@@ -421,12 +564,13 @@ export default function DatosManuales({ navigation }) {
                       }}
                     >
                       <Picker.Item label="Selecciona un Empleado" value="" />
-                      <Picker.Item label="Juan Pérez" value="JuanPerez" />
-                      <Picker.Item label="María García" value="MariaGarcia" />
-                      <Picker.Item
-                        label="Carlos Rodríguez"
-                        value="CarlosRodriguez"
-                      />
+                      {empleados.map((item) => (
+                        <Picker.Item
+                          key={item.ID}
+                          label={item.nombre}
+                          value={item.ID}
+                        />
+                      ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -445,13 +589,100 @@ export default function DatosManuales({ navigation }) {
               mode="dropdown"
             >
               <Picker.Item label="Selecciona un Empleado" value="" />
-              <Picker.Item label="Juan Pérez" value="JuanPerez" />
-              <Picker.Item label="María García" value="MariaGarcia" />
-              <Picker.Item label="Carlos Rodríguez" value="CarlosRodriguez" />
+              {empleados.map((item) => (
+                <Picker.Item
+                  key={item.ID}
+                  label={item.nombre}
+                  value={item.ID}
+                />
+              ))}
             </Picker>
           )}
         </View>
         <Text style={styles.staticText}>{fechaRecibido}</Text>
+
+        <Text style={styles.label}>Información Devuelto:</Text>
+        <View
+          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
+        >
+          <TextInput
+            style={{ flex: 1, height: "100%" }}
+            value={empleadoDevuelto}
+            onChangeText={setEmpleadoDevuelto}
+            placeholder="Introduce o selecciona Empleado Devuelto"
+            editable={validado && estado === "DEVUELTO"}
+          />
+          {Platform.OS === "ios" ? (
+            <>
+              <TouchableOpacity
+                onPress={() => setShowEmpleadoDevueltoPicker(true)}
+                style={{ width: 30, alignItems: "center" }}
+              >
+                <Text>▼</Text>
+              </TouchableOpacity>
+              <Modal
+                visible={showEmpleadoDevueltoPicker}
+                transparent
+                animationType="slide"
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 20,
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Picker
+                      selectedValue={empleadoDevuelto}
+                      onValueChange={(itemValue) => {
+                        setEmpleadoDevuelto(itemValue);
+                        setShowEmpleadoDevueltoPicker(false);
+                      }}
+                    >
+                      <Picker.Item label="Selecciona un Empleado" value="" />
+                      {empleados.map((item) => (
+                        <Picker.Item
+                          key={item.ID}
+                          label={item.nombre}
+                          value={item.ID}
+                        />
+                      ))}
+                    </Picker>
+                    <Button
+                      title="Cerrar"
+                      onPress={() => setShowEmpleadoDevueltoPicker(false)}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            </>
+          ) : (
+            <Picker
+              selectedValue={empleadoDevuelto}
+              onValueChange={setEmpleadoDevuelto}
+              style={{ width: 30, height: "100%" }}
+              enabled={validado && estado === "DEVUELTO"}
+              mode="dropdown"
+            >
+              <Picker.Item label="Selecciona un Empleado" value="" />
+              {empleados.map((item) => (
+                <Picker.Item
+                  key={item.ID}
+                  label={item.nombre}
+                  value={item.ID}
+                />
+              ))}
+            </Picker>
+          )}
+        </View>
+        <Text style={styles.staticText}>{fechaDevuelto}</Text>
 
         <Text style={styles.label}>Información Para Devolver:</Text>
         <View
@@ -499,12 +730,13 @@ export default function DatosManuales({ navigation }) {
                       }}
                     >
                       <Picker.Item label="Selecciona un Empleado" value="" />
-                      <Picker.Item label="Juan Pérez" value="JuanPerez" />
-                      <Picker.Item label="María García" value="MariaGarcia" />
-                      <Picker.Item
-                        label="Carlos Rodríguez"
-                        value="CarlosRodriguez"
-                      />
+                      {empleados.map((item) => (
+                        <Picker.Item
+                          key={item.ID}
+                          label={item.nombre}
+                          value={item.ID}
+                        />
+                      ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -523,9 +755,13 @@ export default function DatosManuales({ navigation }) {
               mode="dropdown"
             >
               <Picker.Item label="Selecciona un Empleado" value="" />
-              <Picker.Item label="Juan Pérez" value="JuanPerez" />
-              <Picker.Item label="María García" value="MariaGarcia" />
-              <Picker.Item label="Carlos Rodríguez" value="CarlosRodriguez" />
+              {empleados.map((item) => (
+                <Picker.Item
+                  key={item.ID}
+                  label={item.nombre}
+                  value={item.ID}
+                />
+              ))}
             </Picker>
           )}
         </View>
@@ -577,12 +813,13 @@ export default function DatosManuales({ navigation }) {
                       }}
                     >
                       <Picker.Item label="Selecciona un Empleado" value="" />
-                      <Picker.Item label="Juan Pérez" value="JuanPerez" />
-                      <Picker.Item label="María García" value="MariaGarcia" />
-                      <Picker.Item
-                        label="Carlos Rodríguez"
-                        value="CarlosRodriguez"
-                      />
+                      {empleados.map((item) => (
+                        <Picker.Item
+                          key={item.ID}
+                          label={item.nombre}
+                          value={item.ID}
+                        />
+                      ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -601,9 +838,13 @@ export default function DatosManuales({ navigation }) {
               mode="dropdown"
             >
               <Picker.Item label="Selecciona un Empleado" value="" />
-              <Picker.Item label="Juan Pérez" value="JuanPerez" />
-              <Picker.Item label="María García" value="MariaGarcia" />
-              <Picker.Item label="Carlos Rodríguez" value="CarlosRodriguez" />
+              {empleados.map((item) => (
+                <Picker.Item
+                  key={item.ID}
+                  label={item.nombre}
+                  value={item.ID}
+                />
+              ))}
             </Picker>
           )}
         </View>
