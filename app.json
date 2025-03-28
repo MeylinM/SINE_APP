@@ -1,14 +1,13 @@
 {
   "expo": {
-    "name": "SENA_App",
-    "slug": "SENA_App",
+    "name": "SineQR",
+    "slug": "SineQR",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/SineQR.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -23,7 +22,7 @@
       "permissions": [
         "CAMERA"
       ],
-      "package": "com.egoitz.SENA_App"
+      "package": "com.egoitz.SineQR"
     },
     "web": {
       "favicon": "./assets/favicon.png"
