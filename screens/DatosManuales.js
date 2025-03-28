@@ -17,18 +17,22 @@ import { getCurrentDateTime } from "../utils/DateHelper";
 import { styles } from "../styles/FormStyles";
 import { DataContext } from "./DataContext"; // ✅ Importar el contexto
 import { Picker } from "@react-native-picker/picker";
-import { obtenerAlmacenes } from "../services/AlmacenesServices";
-import { obtenerOtObras } from "../services/ObraServices";
+import {
+  obtenerAlmacenes,
+  obtenerTodosLosAlmacenes,
+  agregarAlmacen,
+} from "../services/AlmacenesServices";
+import { obtenerOtObras, agregarObra } from "../services/ObraServices";
 import { obtenerEmpleados } from "../services/EmpleadoServices";
 import {
   obtenerProductoPorMatricula,
+  obtenerProductoPorId,
   actualizarProducto,
+  agregarProducto,
 } from "../services/ProductoServices";
 import { registrarUsuarioProducto } from "../services/UsuarioRegistroServices";
 
 export default function DatosManuales({ navigation }) {
-  const { datosGuardados, setDatosGuardados } = useContext(DataContext);
-
   // Estados del formulario
   const [matricula, setMatricula] = useState("");
   const [almacen, setAlmacen] = useState("");
@@ -55,10 +59,35 @@ export default function DatosManuales({ navigation }) {
   const [almacenes, setAlmacenes] = useState([]);
   const [otObras, setOtObras] = useState([]);
   const [empleados, setEmpleados] = useState([]);
+  const [id, setId] = useState("");
+  useEffect(() => {
+    const comprobarUsuariosActivos = async () => {
+      try {
+        const empleadosDB = await obtenerEmpleados();
+
+        if (!empleadosDB || empleadosDB.length === 0) {
+          Alert.alert(
+            "Sin usuarios",
+            "No hay usuarios activos registrados. Habla con la persona o personas que tengan permiso para introducir usuarios.",
+            [{ text: "Aceptar", onPress: () => navigation.navigate("Home") }]
+          );
+        } else {
+          setEmpleados(empleadosDB);
+        }
+      } catch (error) {
+        console.error("❌ Error al verificar usuarios activos:", error);
+        Alert.alert("Error", "Ocurrió un error al comprobar los usuarios.", [
+          { text: "Aceptar", onPress: () => navigation.navigate("Home") },
+        ]);
+      }
+    };
+
+    comprobarUsuariosActivos();
+  }, []);
 
   const validarMatricula = async () => {
     if (!matricula.trim()) {
-      Alert.alert("Error", "Introduce una matrícula válida.");
+      Alert.alert("Error", "Debes introducir una matrícula válida.");
       return;
     }
 
@@ -68,54 +97,81 @@ export default function DatosManuales({ navigation }) {
       const otObrasDB = await obtenerOtObras();
       const empleadosDB = await obtenerEmpleados();
 
+      console.log("🔹 Almacenes obtenidos:", almacenesDB);
+      console.log("🔹 Obras obtenidas:", otObrasDB);
+      console.log("🔹 Empleados obtenidos:", empleadosDB);
+
       setAlmacenes(almacenesDB);
       setOtObras(otObrasDB);
       setEmpleados(empleadosDB);
 
-      // **Buscar la matrícula en la BD**
-      const producto = await obtenerProductoPorMatricula(matricula);
+      console.log("✅ Estados actualizados correctamente.");
 
-      let nuevoEstado = "RECIBIDO";
-      let nuevaFechaParaDevolver = "";
-      let nuevaFechaDevuelto = "";
+      const resultado = await obtenerProductoPorMatricula(matricula.toString());
+      const producto = Array.isArray(resultado) ? resultado[0] : resultado;
 
+      let estadoActual = (producto?.estado || "").toUpperCase(); // para comparar
+      let nuevoEstado = "Recibido"; // valor inicial por defecto
+
+      // **Actualizar estado según la lógica de flujo**
       if (producto) {
-        switch (producto.estado) {
+        // Calcular el siguiente estado TEMPORAL
+        switch (estadoActual) {
           case "RECIBIDO":
-            nuevoEstado = "PARA DEVOLVER";
-            nuevaFechaParaDevolver = getCurrentDateTime();
+            nuevoEstado = "Para Devolver";
             break;
           case "PARA DEVOLVER":
-            nuevoEstado = "DEVUELTO";
-            nuevaFechaDevuelto = getCurrentDateTime();
+            nuevoEstado = "Devuelto";
             break;
           case "DEVUELTO":
-            nuevoEstado = "DEVUELTO";
+            nuevoEstado = "Devuelto"; // no avanza más
             break;
           default:
-            nuevoEstado = "RECIBIDO";
+            nuevoEstado = "Recibido";
         }
-
-        setAlmacen(producto.ID_Almacen || "");
-        setOtObra(producto.ID_Obra || "");
-        setDescripcionObra(producto.descripcion || "");
-        setEstado(nuevoEstado);
-        setEmpleadoRecibido(producto.empleadoRecibido || "");
-        setFechaRecibido(producto.fechaRecibido || "");
-        setEmpleadoParaDevolver(producto.empleadoParaDevolver || "");
-        setFechaParaDevolver(
-          nuevaFechaParaDevolver || producto.fechaParaDevolver || ""
+        console.log("🔹 Producto encontrado:", producto);
+        console.log(
+          "🔁 Estado actual:",
+          estadoActual,
+          "→ Temporal:",
+          nuevoEstado
         );
-        setEmpleadoDevuelto(producto.empleadoDevuelto || "");
-        setFechaDevuelto(nuevaFechaDevuelto || producto.fechaDevuelto || "");
+        // Establecer campos base
+        setId(producto.producto_id?.toString() || "");
+        setAlmacen(producto.nombre_almacen || "");
+        setOtObra(producto.ot || "");
+        setDescripcionObra(producto.descripcion_obra || "");
+        setEstado(nuevoEstado);
         setObservaciones(producto.observaciones || "");
+
+        // Cargar historial: mostrar siempre datos anteriores
+        setEmpleadoRecibido(producto.empleado1 || "");
+        setFechaRecibido(producto.fecha1 || "");
+        setEmpleadoParaDevolver(producto.empleado2 || "");
+        setFechaParaDevolver(producto.fecha2 || "");
+        setEmpleadoDevuelto(producto.empleado3 || "");
+        setFechaDevuelto(producto.fecha3 || "");
       } else {
+        // **Si el producto NO existe, permitir ingreso manual**
+        setId("");
+        setAlmacen("");
+        setOtObra("");
+        setDescripcionObra("");
+        setEstado(nuevoEstado); // Se mantiene en "RECIBIDO"
+        setEmpleadoRecibido("");
         setFechaRecibido(getCurrentDateTime());
-        setEstado("RECIBIDO");
+        setEmpleadoParaDevolver("");
+        setFechaParaDevolver("");
+        setEmpleadoDevuelto("");
+        setFechaDevuelto("");
+        setObservaciones("");
+
+        console.log("✅ Producto no encontrado, permitiendo ingreso manual.");
       }
 
       setValidado(true);
     } catch (error) {
+      console.error("❌ Error al obtener los datos:", error);
       Alert.alert(
         "Error",
         "No se pudo cargar la información desde la base de datos."
@@ -123,162 +179,194 @@ export default function DatosManuales({ navigation }) {
     }
   };
 
+  // **useEffect para depuración**
+  useEffect(() => {
+    console.log("📌 Almacenes en estado:", almacenes);
+    console.log("📌 OT Obras en estado:", otObras);
+    console.log("📌 Empleados en estado:", empleados);
+  }, [almacenes, otObras, empleados]);
+
   const [datosGuardadosTemporalmente, setDatosGuardadosTemporalmente] =
     useState(null);
 
+  function formatFechaParaMySQL(fechaISO) {
+    const fecha = new Date(fechaISO);
+
+    const año = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+    const dia = String(fecha.getDate()).padStart(2, "0");
+    const horas = String(fecha.getHours()).padStart(2, "0");
+    const minutos = String(fecha.getMinutes()).padStart(2, "0");
+    const segundos = String(fecha.getSeconds()).padStart(2, "0");
+
+    return `${año}-${mes}-${dia} ${horas}:${minutos}:${segundos}`;
+  }
   const handleGuardar = async () => {
     if (!validado) {
       Alert.alert("Error", "Debes validar la matrícula antes de guardar.");
       return;
     }
 
-    const fecha = getCurrentDateTime(); // Obtener la fecha actual
+    const fecha = formatFechaParaMySQL(new Date());
 
     try {
       console.log("🔹 Iniciando proceso de guardado...");
-      console.log("🔹 Matricula:", matricula);
-      console.log("🔹 Estado:", estado);
-      console.log("🔹 Observaciones:", observaciones);
-      console.log("🔹 Almacén ingresado:", almacen);
-      console.log("🔹 OT Obra ingresada:", otObra);
 
-      let idObra = null;
-      let idAlmacen = null;
-
-      // **1. Verificar si la OT Obra ya existe en la tabla `Obra`**
-      if (otObra.trim() !== "") {
-        const obrasDB = await obtenerOtObras();
-        const obraExistente = obrasDB.find((obra) => obra.ot === otObra);
-
-        if (!obraExistente) {
-          console.log(
-            `⚡ Agregando nueva obra: OT ${otObra}, Descripción: ${descripcionObra}`
-          );
-          idObra = await agregarObra(otObra, descripcionObra);
-          if (!idObra) {
-            Alert.alert(
-              "Error",
-              "No se pudo registrar la obra en la base de datos."
-            );
-            return;
-          }
-        } else {
-          idObra = obraExistente.ot;
-        }
-      }
-
-      // **2. Verificar si el Almacén ya existe en la tabla `Almacén`**
-      if (almacen.trim() !== "") {
-        const almacenesDB = await obtenerAlmacenes();
-        const almacenExistente = almacenesDB.find(
-          (alm) => alm.nombre === almacen
-        );
-
-        if (!almacenExistente) {
-          console.log(`⚡ Agregando nuevo almacén: ${almacen}`);
-          idAlmacen = await agregarAlmacen(almacen);
-          if (!idAlmacen) {
-            Alert.alert(
-              "Error",
-              "No se pudo registrar el almacén en la base de datos."
-            );
-            return;
-          }
-        } else {
-          idAlmacen = almacenExistente.id;
-        }
-      }
-
-      console.log("✅ IDs después de validación:");
-      console.log("   - ID Almacén:", idAlmacen);
-      console.log("   - ID Obra:", idObra);
-
-      // **3. Verificar si el Producto ya existe en la BD antes de actualizar**
-      const productoExistente = await obtenerProductoPorMatricula(matricula);
-      if (!productoExistente) {
-        console.log(`⚡ Insertando nuevo producto: ${matricula}`);
-        const productoInsertado = await agregarProducto(
-          matricula,
-          observaciones,
-          idAlmacen,
-          idObra
-        );
-        if (!productoInsertado) {
-          Alert.alert(
-            "Error",
-            "No se pudo registrar el producto en la base de datos."
-          );
-          return;
-        }
-      } else {
-        console.log(
-          "✅ Producto ya existe en la base de datos, solo se actualizará."
-        );
-      }
-
-      // **4. Actualizar la tabla `Producto`**
-      console.log("📌 Actualizando producto en la base de datos...");
-      const productoActualizado = await actualizarProducto(
-        matricula,
-        estado,
-        observaciones,
-        idAlmacen,
-        idObra
-      );
-
-      if (!productoActualizado) {
-        Alert.alert("Error", "No se pudo actualizar el producto.");
+      if (!matricula?.trim() || !estado?.trim()) {
+        Alert.alert("Error", "Faltan datos para registrar el estado.");
         return;
       }
 
-      console.log("✅ Producto actualizado correctamente.");
+      const estadoCapitalizado =
+        estado.charAt(0).toUpperCase() + estado.slice(1).toLowerCase();
 
-      // **5. Registrar la acción en `UsuarioProducto`**
-      let empleadoID = null;
-      let registroTipo = "";
+      let empleadoNombreSeleccionado = "";
 
-      if (estado === "RECIBIDO") {
-        empleadoID = empleadoRecibido;
-        registroTipo = "RECIBIDO";
-      } else if (estado === "PARA DEVOLVER") {
-        empleadoID = empleadoParaDevolver;
-        registroTipo = "PARA DEVOLVER";
-      } else if (estado === "DEVUELTO") {
-        empleadoID = empleadoDevuelto;
-        registroTipo = "DEVUELTO";
+      if (estado === "Recibido") {
+        empleadoNombreSeleccionado = empleadoRecibido;
+      } else if (estado === "Para Devolver") {
+        empleadoNombreSeleccionado = empleadoParaDevolver;
+      } else if (estado === "Devuelto") {
+        empleadoNombreSeleccionado = empleadoDevuelto;
       }
 
-      if (empleadoID) {
-        console.log("📌 Registrando en UsuarioProducto...");
-        console.log("   - Empleado ID:", empleadoID);
-        console.log("   - Matricula:", matricula);
-        console.log("   - Tipo de registro:", registroTipo);
-        console.log("   - Fecha:", fecha);
+      if (!empleadoNombreSeleccionado?.trim()) {
+        Alert.alert("Error", "Debes seleccionar un empleado que recibe.");
+        return;
+      }
+      const empleadoSeleccionado = empleados.find(
+        (empleado) => empleado.nombre === empleadoNombreSeleccionado
+      );
 
-        const usuarioProductoGuardado = await registrarUsuarioProducto(
-          empleadoID,
-          matricula,
-          registroTipo,
-          fecha
-        );
+      if (!empleadoSeleccionado) {
+        Alert.alert("Error", "Empleado no encontrado.");
+        return;
+      }
 
-        if (!usuarioProductoGuardado) {
-          Alert.alert("Error", "No se pudo registrar la acción del empleado.");
+      const id_user = empleadoSeleccionado.id;
+
+      // Verificamos almacén
+      let idAlmacenFinal = almacen;
+      const todosLosAlmacenes = await obtenerTodosLosAlmacenes();
+      const almacenExistente = todosLosAlmacenes.find(
+        (a) => a.nombre === almacen
+      );
+
+      if (almacenExistente) {
+        if (almacenExistente.activo === 1) {
+          // Ya existe y está activo ✅
+          idAlmacenFinal = almacenExistente.id;
+        } else {
+          // Existe pero está inactivo ⚠️
+          Alert.alert(
+            "Almacén inactivo",
+            `El almacén "${almacen}" ya existe pero está inactivo.`,
+            [
+              { text: "Cancelar", style: "cancel" },
+              {
+                text: "Activar",
+                onPress: async () => {
+                  const actualizado = await activarAlmacen(almacenExistente.id); // crea esta función si quieres
+                  if (actualizado) {
+                    idAlmacenFinal = almacenExistente.id;
+                    Alert.alert("Activado", "El almacén ha sido activado.");
+                  } else {
+                    Alert.alert("Error", "No se pudo activar el almacén.");
+                  }
+                },
+              },
+            ]
+          );
+          return; // Detener aquí para esperar acción del usuario
+        }
+      } else {
+        // No existe → se crea
+        const nuevoIdAlmacen = await agregarAlmacen(almacen);
+        if (!nuevoIdAlmacen) {
+          Alert.alert("Error", "No se pudo agregar el nuevo almacén.");
           return;
         }
+        idAlmacenFinal = nuevoIdAlmacen;
       }
 
-      Alert.alert(
-        "✅ Éxito",
-        "Datos guardados correctamente en la base de datos."
+      // Verificamos obra
+      let otObraFinal = otObra;
+      const obraExistente = otObras.find((o) => o.ot === otObra);
+      if (!obraExistente) {
+        const nuevaOtObra = await agregarObra(otObra, descripcionObra);
+        if (!nuevaOtObra) {
+          Alert.alert("Error", "No se pudo agregar la nueva obra.");
+          return;
+        }
+        otObraFinal = nuevaOtObra;
+      }
+
+      // Verificamos si el producto ya existe por matrícula
+      const productoExistente = await obtenerProductoPorMatricula(matricula);
+      let productoIdFinal = id;
+
+      if (productoExistente) {
+        // ✅ Si ya existe por matrícula, lo actualizamos
+        const actualizado = await actualizarProducto(
+          id,
+          matricula,
+          observaciones
+        );
+
+        if (!actualizado) {
+          Alert.alert("Error", "No se pudo actualizar el producto.");
+          return;
+        }
+
+        console.log("✅ Producto actualizado correctamente.");
+      } else {
+        // 🛑 Validación adicional: evitar duplicado por ID
+        const productoPorId = await obtenerProductoPorId(id);
+
+        if (productoPorId) {
+          Alert.alert(
+            "Error",
+            "Ya existe un producto con este ID. No puedes duplicar datos."
+          );
+          return;
+        }
+
+        // ✅ Insertar producto nuevo
+        const productoInsertado = await agregarProducto(
+          id,
+          matricula,
+          observaciones,
+          idAlmacenFinal,
+          otObraFinal
+        );
+
+        if (!productoInsertado) {
+          Alert.alert("Error", "No se pudo insertar el nuevo producto.");
+          return;
+        }
+
+        console.log("✅ Producto insertado correctamente con ID:", id);
+        productoIdFinal = id; // ← usar directamente el ID manual introducido
+      }
+
+      // Registrar estado con ID correcto
+      const usuarioProductoRegistrado = await registrarUsuarioProducto(
+        id_user,
+        productoIdFinal,
+        estadoCapitalizado,
+        fecha
       );
+
+      if (!usuarioProductoRegistrado) {
+        Alert.alert("Error", "No se pudo registrar el estado del producto.");
+        return;
+      }
+
+      Alert.alert("✅ Éxito", "Datos guardados correctamente.");
       navigation.navigate("Home");
     } catch (error) {
-      console.error("❌ Error al guardar:", error);
-      Alert.alert(
-        "Error",
-        "Ocurrió un problema al guardar en la base de datos."
-      );
+      console.error("❌ Error general en guardado:", error);
+      Alert.alert("Error", "Ocurrió un problema al guardar los datos.");
     }
   };
 
@@ -296,10 +384,18 @@ export default function DatosManuales({ navigation }) {
       <ScrollView>
         <Text style={styles.title}>Introducción Manual de Datos</Text>
 
+        <Text style={styles.label}>Número Identificador:</Text>
+        <TextInput
+          style={styles.input}
+          value={id}
+          onChangeText={setId}
+          editable={validado && estado === "Recibido"}
+          keyboardType="numeric"
+        />
+
+        <Text style={styles.label}>Matrícula:</Text>
         <View style={styles.matriculaContainer}>
           <TextInput
-            style={styles.matriculaInput}
-            placeholder="Matrícula"
             value={matricula}
             onChangeText={setMatricula}
             editable={!validado}
@@ -331,11 +427,13 @@ export default function DatosManuales({ navigation }) {
           style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
         >
           <TextInput
-            style={{ flex: 1, height: "100%" }}
-            value={almacen}
-            onChangeText={setAlmacen}
+            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
+            value={
+              almacenes.find((item) => item.id === almacen)?.nombre || almacen
+            }
+            onChangeText={setAlmacen} // Permite escribir manualmente
             placeholder="Introduce o selecciona Almacén"
-            editable={validado && estado === "RECIBIDO"}
+            editable={validado && estado === "Recibido"} // Permite edición antes de guardar
           />
 
           {Platform.OS === "ios" ? (
@@ -367,18 +465,15 @@ export default function DatosManuales({ navigation }) {
                   >
                     <Picker
                       selectedValue={almacen}
-                      onValueChange={(itemValue) => {
-                        setAlmacen(itemValue);
-                        setShowAlmacenPicker(false);
-                      }}
+                      onValueChange={(itemValue) => setAlmacen(itemValue)}
                     >
                       <Picker.Item
                         label="Selecciona un Almacén"
                         value="custom"
                       />
-                      {almacenes.map((item) => (
+                      {almacenes.map((item, index) => (
                         <Picker.Item
-                          key={item.id}
+                          key={`${item.id}-${index}`}
                           label={item.nombre}
                           value={item.id}
                         />
@@ -394,24 +489,22 @@ export default function DatosManuales({ navigation }) {
             </>
           ) : (
             <Picker
-              selectedValue={validado ? almacen || "custom" : "disabled"}
-              onValueChange={(itemValue) => {
-                if (itemValue !== "custom" && itemValue !== "disabled") {
-                  setAlmacen(itemValue);
-                }
-              }}
+              selectedValue={almacen}
+              onValueChange={(itemValue) => setAlmacen(itemValue)}
               style={{ width: 30, height: "100%" }}
-              enabled={validado && estado === "RECIBIDO"}
+              enabled={validado && estado === "Recibido"}
               mode="dropdown"
             >
               <Picker.Item label="Selecciona un Almacén" value="custom" />
-              {almacenes.map((item) => (
-                <Picker.Item
-                  key={item.id}
-                  label={item.nombre}
-                  value={item.id}
-                />
-              ))}
+              {almacenes
+                .filter((item) => item.id) // Filtra valores vacíos
+                .map((item) => (
+                  <Picker.Item
+                    key={`almacen-${item.id}`}
+                    label={item.nombre}
+                    value={item.id}
+                  />
+                ))}
             </Picker>
           )}
         </View>
@@ -429,7 +522,7 @@ export default function DatosManuales({ navigation }) {
             }}
             placeholder="Introduce o selecciona OT Obra"
             keyboardType="numeric"
-            editable={validado && estado === "RECIBIDO"}
+            editable={validado && estado === "Recibido"}
           />
 
           {Platform.OS === "ios" ? (
@@ -461,23 +554,23 @@ export default function DatosManuales({ navigation }) {
                   >
                     <Picker
                       selectedValue={otObra}
-                      onValueChange={(itemValue) => {
-                        setOtObra(itemValue);
-                        setShowOtObraPicker(false);
-                      }}
+                      onValueChange={(itemValue) => setOtObra(itemValue)}
                     >
                       <Picker.Item
                         label="Selecciona una OT de obra"
                         value="custom"
                       />
-                      {otObras.map((item) => (
-                        <Picker.Item
-                          key={item.ot}
-                          label={item.descripcion}
-                          value={item.ot}
-                        />
-                      ))}
+                      {otObras
+                        .filter((item) => item.ot) // Filtra valores vacíos
+                        .map((item) => (
+                          <Picker.Item
+                            key={`obra-${item.ot}`}
+                            label={item.ot} // solo el número OT
+                            value={item.ot}
+                          />
+                        ))}
                     </Picker>
+
                     <Button
                       title="Cerrar"
                       onPress={() => setShowOtObraPicker(false)}
@@ -495,16 +588,12 @@ export default function DatosManuales({ navigation }) {
                 }
               }}
               style={{ width: 30, height: "100%" }}
-              enabled={validado && estado === "RECIBIDO"}
+              enabled={validado && estado === "Recibido"}
               mode="dropdown"
             >
               <Picker.Item label="Selecciona una OT de obra" value="custom" />
               {otObras.map((item) => (
-                <Picker.Item
-                  key={item.ot}
-                  label={item.descripcion}
-                  value={item.ot}
-                />
+                <Picker.Item key={item.ot} label={item.ot} value={item.ot} />
               ))}
             </Picker>
           )}
@@ -515,7 +604,7 @@ export default function DatosManuales({ navigation }) {
           style={styles.input}
           value={descripcionObra}
           onChangeText={setDescripcionObra}
-          editable={validado && estado === "RECIBIDO"}
+          editable={validado && estado === "Recibido"}
         />
 
         <Text style={styles.label}>Información Recibido:</Text>
@@ -523,12 +612,13 @@ export default function DatosManuales({ navigation }) {
           style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
         >
           <TextInput
-            style={{ flex: 1, height: "100%" }}
+            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
             value={empleadoRecibido}
             onChangeText={setEmpleadoRecibido}
-            placeholder="Introduce o selecciona Empleado Recibido"
-            editable={validado && estado === "RECIBIDO"}
+            placeholder="Introduce o selecciona Empleados"
+            editable={validado && estado === "Recibido"}
           />
+
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
@@ -559,18 +649,21 @@ export default function DatosManuales({ navigation }) {
                     <Picker
                       selectedValue={empleadoRecibido}
                       onValueChange={(itemValue) => {
-                        setEmpleadoRecibido(itemValue);
+                        setEmpleadoRecibido(itemValue); // Guarda selección en el campo
+                        setFechaRecibido(getCurrentDateTime()); // Guarda la fecha
                         setShowEmpleadoRecibidoPicker(false);
                       }}
                     >
                       <Picker.Item label="Selecciona un Empleado" value="" />
-                      {empleados.map((item) => (
-                        <Picker.Item
-                          key={item.ID}
-                          label={item.nombre}
-                          value={item.ID}
-                        />
-                      ))}
+                      {empleados
+                        .filter((item) => item.id) // Filtra valores vacíos
+                        .map((item) => (
+                          <Picker.Item
+                            key={`empleado-${item.id}`}
+                            label={item.nombre}
+                            value={item.nombre}
+                          />
+                        ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -583,17 +676,20 @@ export default function DatosManuales({ navigation }) {
           ) : (
             <Picker
               selectedValue={empleadoRecibido}
-              onValueChange={setEmpleadoRecibido}
+              onValueChange={(itemValue) => {
+                setEmpleadoRecibido(itemValue);
+                setFechaRecibido(getCurrentDateTime());
+              }}
               style={{ width: 30, height: "100%" }}
-              enabled={validado && estado === "RECIBIDO"}
+              enabled={validado && estado === "Recibido"}
               mode="dropdown"
             >
               <Picker.Item label="Selecciona un Empleado" value="" />
               {empleados.map((item) => (
                 <Picker.Item
-                  key={item.ID}
+                  key={`empleado-${item.id}`}
                   label={item.nombre}
-                  value={item.ID}
+                  value={item.nombre}
                 />
               ))}
             </Picker>
@@ -601,100 +697,18 @@ export default function DatosManuales({ navigation }) {
         </View>
         <Text style={styles.staticText}>{fechaRecibido}</Text>
 
-        <Text style={styles.label}>Información Devuelto:</Text>
-        <View
-          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
-        >
-          <TextInput
-            style={{ flex: 1, height: "100%" }}
-            value={empleadoDevuelto}
-            onChangeText={setEmpleadoDevuelto}
-            placeholder="Introduce o selecciona Empleado Devuelto"
-            editable={validado && estado === "DEVUELTO"}
-          />
-          {Platform.OS === "ios" ? (
-            <>
-              <TouchableOpacity
-                onPress={() => setShowEmpleadoDevueltoPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
-              >
-                <Text>▼</Text>
-              </TouchableOpacity>
-              <Modal
-                visible={showEmpleadoDevueltoPicker}
-                transparent
-                animationType="slide"
-              >
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 20,
-                      borderRadius: 10,
-                    }}
-                  >
-                    <Picker
-                      selectedValue={empleadoDevuelto}
-                      onValueChange={(itemValue) => {
-                        setEmpleadoDevuelto(itemValue);
-                        setShowEmpleadoDevueltoPicker(false);
-                      }}
-                    >
-                      <Picker.Item label="Selecciona un Empleado" value="" />
-                      {empleados.map((item) => (
-                        <Picker.Item
-                          key={item.ID}
-                          label={item.nombre}
-                          value={item.ID}
-                        />
-                      ))}
-                    </Picker>
-                    <Button
-                      title="Cerrar"
-                      onPress={() => setShowEmpleadoDevueltoPicker(false)}
-                    />
-                  </View>
-                </View>
-              </Modal>
-            </>
-          ) : (
-            <Picker
-              selectedValue={empleadoDevuelto}
-              onValueChange={setEmpleadoDevuelto}
-              style={{ width: 30, height: "100%" }}
-              enabled={validado && estado === "DEVUELTO"}
-              mode="dropdown"
-            >
-              <Picker.Item label="Selecciona un Empleado" value="" />
-              {empleados.map((item) => (
-                <Picker.Item
-                  key={item.ID}
-                  label={item.nombre}
-                  value={item.ID}
-                />
-              ))}
-            </Picker>
-          )}
-        </View>
-        <Text style={styles.staticText}>{fechaDevuelto}</Text>
-
         <Text style={styles.label}>Información Para Devolver:</Text>
         <View
           style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
         >
           <TextInput
-            style={{ flex: 1, height: "100%" }}
+            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
             value={empleadoParaDevolver}
-            onChangeText={setEmpleadoParaDevolver}
-            placeholder="Introduce o selecciona Empleado Para Devolver"
-            editable={validado && estado === "PARA DEVOLVER"}
+            onChangeText={setEmpleadoParaDevolver} // Permite escritura manual
+            placeholder="Introduce o selecciona Empleados"
+            editable={validado && estado === "Para Devolver"} // Permite edición antes de guardar
           />
+
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
@@ -726,17 +740,20 @@ export default function DatosManuales({ navigation }) {
                       selectedValue={empleadoParaDevolver}
                       onValueChange={(itemValue) => {
                         setEmpleadoParaDevolver(itemValue);
+                        setFechaParaDevolver(getCurrentDateTime());
                         setShowEmpleadoParaDevolverPicker(false);
                       }}
                     >
                       <Picker.Item label="Selecciona un Empleado" value="" />
-                      {empleados.map((item) => (
-                        <Picker.Item
-                          key={item.ID}
-                          label={item.nombre}
-                          value={item.ID}
-                        />
-                      ))}
+                      {empleados
+                        .filter((item) => item.id) // Filtra valores vacíos
+                        .map((item) => (
+                          <Picker.Item
+                            key={`empleado-${item.id}`}
+                            label={item.nombre}
+                            value={item.nombre}
+                          />
+                        ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -749,19 +766,24 @@ export default function DatosManuales({ navigation }) {
           ) : (
             <Picker
               selectedValue={empleadoParaDevolver}
-              onValueChange={setEmpleadoParaDevolver}
+              onValueChange={(itemValue) => {
+                setEmpleadoParaDevolver(itemValue);
+                setFechaParaDevolver(getCurrentDateTime());
+              }}
               style={{ width: 30, height: "100%" }}
-              enabled={validado && estado === "PARA DEVOLVER"}
+              enabled={validado && estado === "Para Devolver"}
               mode="dropdown"
             >
               <Picker.Item label="Selecciona un Empleado" value="" />
-              {empleados.map((item) => (
-                <Picker.Item
-                  key={item.ID}
-                  label={item.nombre}
-                  value={item.ID}
-                />
-              ))}
+              {empleados
+                .filter((item) => item.id) // Filtra valores vacíos
+                .map((item) => (
+                  <Picker.Item
+                    key={`empleado-${item.id}`}
+                    label={item.nombre}
+                    value={item.nombre}
+                  />
+                ))}
             </Picker>
           )}
         </View>
@@ -772,12 +794,13 @@ export default function DatosManuales({ navigation }) {
           style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
         >
           <TextInput
-            style={{ flex: 1, height: "100%" }}
+            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
             value={empleadoDevuelto}
-            onChangeText={setEmpleadoDevuelto}
-            placeholder="Introduce o selecciona Empleado Devuelto"
-            editable={validado && estado === "DEVUELTO"}
+            onChangeText={setEmpleadoDevuelto} // Permite escritura manual
+            placeholder="Introduce o selecciona Empleados"
+            editable={validado && estado === "Devuelto"} // Permite edición antes de guardar
           />
+
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
@@ -809,17 +832,20 @@ export default function DatosManuales({ navigation }) {
                       selectedValue={empleadoDevuelto}
                       onValueChange={(itemValue) => {
                         setEmpleadoDevuelto(itemValue);
+                        setFechaDevuelto(getCurrentDateTime());
                         setShowEmpleadoDevueltoPicker(false);
                       }}
                     >
                       <Picker.Item label="Selecciona un Empleado" value="" />
-                      {empleados.map((item) => (
-                        <Picker.Item
-                          key={item.ID}
-                          label={item.nombre}
-                          value={item.ID}
-                        />
-                      ))}
+                      {empleados
+                        .filter((item) => item.id) // Filtra valores vacíos
+                        .map((item) => (
+                          <Picker.Item
+                            key={`empleado-${item.id}`}
+                            label={item.nombre}
+                            value={item.nombre}
+                          />
+                        ))}
                     </Picker>
                     <Button
                       title="Cerrar"
@@ -832,19 +858,24 @@ export default function DatosManuales({ navigation }) {
           ) : (
             <Picker
               selectedValue={empleadoDevuelto}
-              onValueChange={setEmpleadoDevuelto}
+              onValueChange={(itemValue) => {
+                setEmpleadoDevuelto(itemValue);
+                setFechaDevuelto(getCurrentDateTime());
+              }}
               style={{ width: 30, height: "100%" }}
-              enabled={validado && estado === "DEVUELTO"}
+              enabled={validado && estado === "Devuelto"}
               mode="dropdown"
             >
               <Picker.Item label="Selecciona un Empleado" value="" />
-              {empleados.map((item) => (
-                <Picker.Item
-                  key={item.ID}
-                  label={item.nombre}
-                  value={item.ID}
-                />
-              ))}
+              {empleados
+                .filter((item) => item.id) // Filtra valores vacíos
+                .map((item) => (
+                  <Picker.Item
+                    key={`empleado-${item.id}`}
+                    label={item.nombre}
+                    value={item.nombre}
+                  />
+                ))}
             </Picker>
           )}
         </View>

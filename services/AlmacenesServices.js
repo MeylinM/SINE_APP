@@ -1,10 +1,10 @@
-const API_URL = "http://192.168.10.101:3000/almacen";
+const API_URL = "https://sineserver-production.up.railway.app/almacen";
 
 // Obtener todos los almacenes
 export const obtenerAlmacenes = async () => {
   try {
     console.log("🔹 Obteniendo almacenes desde la base de datos...");
-    const response = await fetch(API_URL);
+    const response = await fetch(`${API_URL}/activos`);
 
     if (!response.ok) {
       console.error("❌ Error HTTP al obtener almacenes:", response.status);
@@ -16,6 +16,23 @@ export const obtenerAlmacenes = async () => {
     return data;
   } catch (error) {
     console.error("❌ Error obteniendo almacenes:", error);
+    return [];
+  }
+};
+export const obtenerTodosLosAlmacenes = async () => {
+  try {
+    const response = await fetch(`${API_URL}`); // sin `/activos`
+    if (!response.ok) {
+      console.error(
+        "❌ Error HTTP al obtener todos los almacenes:",
+        response.status
+      );
+      return [];
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("❌ Error al obtener todos los almacenes:", error);
     return [];
   }
 };

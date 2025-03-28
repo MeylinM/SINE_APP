@@ -1,4 +1,4 @@
-const API_URL = "http://192.168.10.101:3000/usuario";
+const API_URL = "https://sineserver-production.up.railway.app/usuario/activos";
 
 // Obtener todos los empleados desde la base de datos
 export const obtenerEmpleados = async () => {
@@ -12,7 +12,14 @@ export const obtenerEmpleados = async () => {
 
     const data = await response.json();
     console.log("Empleados obtenidos:", data);
-    return data;
+
+    // Comprobamos si la respuesta tiene datos correctos
+    if (Array.isArray(data) && data.length > 0) {
+      return data;
+    } else {
+      console.error("❌ Error: La respuesta no contiene empleados.");
+      return [];
+    }
   } catch (error) {
     console.error("Error obteniendo empleados:", error);
     return []; // Retorna un array vacío para evitar fallos en la UI

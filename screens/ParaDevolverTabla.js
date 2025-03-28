@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,23 +9,13 @@ import {
 
 import styles from "../styles/TableStyle";
 import * as ScreenOrientation from "expo-screen-orientation";
-import ModalSelector from "react-native-modal-selector";
 import { Ionicons } from "@expo/vector-icons";
 import { obtenerHistorialProductos } from "../services/ProductoServices";
 
-export default function AllDataTable() {
+export default function ParaDevolverTabla() {
   const [historialProductos, setHistorialProductos] = useState([]);
-
-  const [estadoSeleccionado, setEstadoSeleccionado] = useState("All");
   const [matriculaBusqueda, setMatriculaBusqueda] = useState("");
   const [empleadoBusqueda, setEmpleadoBusqueda] = useState("");
-
-  const estados = [
-    { key: "All", label: "Todos" },
-    { key: "Recibido", label: "Recibido" },
-    { key: "Para devolver", label: "Para Devolver" },
-    { key: "Devuelto", label: "Devuelto" },
-  ];
 
   useEffect(() => {
     const cambiarOrientacion = async () => {
@@ -35,7 +25,6 @@ export default function AllDataTable() {
     };
     cambiarOrientacion();
 
-    // Cargar datos de la base de datos
     const cargarDatos = async () => {
       try {
         console.log("🔹 Cargando historial de productos...");
@@ -58,10 +47,8 @@ export default function AllDataTable() {
 
   const filteredBobinas = historialProductos.filter((bobina) => {
     const coincideEstado =
-      estadoSeleccionado === "All" ||
-      (bobina.estado &&
-        bobina.estado.trim().toLowerCase() ===
-          estadoSeleccionado.toLowerCase());
+      bobina.estado && bobina.estado.trim().toLowerCase() === "para devolver";
+
     const coincideMatricula = bobina.matricula.includes(matriculaBusqueda);
     const textoBusqueda = empleadoBusqueda.toLowerCase();
     const coincideEmpleado =
@@ -75,7 +62,8 @@ export default function AllDataTable() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>REGISTRO DE BOBINAS</Text>
+      <Text style={styles.title}>BOBINAS PARA DEVOLVER</Text>
+
       <View style={styles.filtersContainer}>
         <TextInput
           style={styles.input}
@@ -83,22 +71,6 @@ export default function AllDataTable() {
           value={matriculaBusqueda}
           onChangeText={(text) => setMatriculaBusqueda(text)}
         />
-        <View style={styles.pickerContainer}>
-          <ModalSelector
-            data={estados}
-            initValue="Seleccionar Estado"
-            onChange={(option) => setEstadoSeleccionado(option.key)}
-            selectTextStyle={styles.pickerText}
-          >
-            <TouchableOpacity style={styles.pickerTouchable}>
-              <Text style={styles.pickerText}>
-                {estados.find((e) => e.key === estadoSeleccionado)?.label ||
-                  "Seleccionar Estado"}
-              </Text>
-              <Ionicons name="chevron-down-outline" size={18} color="#333" />
-            </TouchableOpacity>
-          </ModalSelector>
-        </View>
         <TextInput
           style={styles.input}
           placeholder="Buscar por empleado"
@@ -109,7 +81,6 @@ export default function AllDataTable() {
 
       <ScrollView horizontal>
         <View style={styles.table}>
-          {/* Encabezado principal */}
           <View style={styles.headerRow}>
             <Text style={styles.headerCell}>QR ID</Text>
             <Text style={styles.headerCell}>MATRÍCULA</Text>
@@ -118,7 +89,6 @@ export default function AllDataTable() {
             <Text style={styles.headerCell}>DESCRIPCIÓN OBRA</Text>
             <Text style={styles.headerCell}>ESTADO</Text>
 
-            {/* Grupo de columnas para Información Recogida */}
             <View style={styles.headerGroup}>
               <Text style={styles.headerCellBig}>INFORMACIÓN RECOGIDA</Text>
               <View style={styles.subHeaderRow}>
@@ -127,7 +97,6 @@ export default function AllDataTable() {
               </View>
             </View>
 
-            {/* Grupo de columnas para Información Devolución */}
             <View style={styles.headerGroup}>
               <Text style={styles.headerCellBig}>INFORMACIÓN DEVOLUCIÓN</Text>
               <View style={styles.subHeaderRow}>
@@ -136,7 +105,6 @@ export default function AllDataTable() {
               </View>
             </View>
 
-            {/* Grupo de columnas para Información Confirmación */}
             <View style={styles.headerGroup}>
               <Text style={styles.headerCellBig}>INFORMACIÓN CONFIRMACIÓN</Text>
               <View style={styles.subHeaderRow}>
@@ -148,7 +116,6 @@ export default function AllDataTable() {
             <Text style={styles.headerCell}>OBSERVACIONES</Text>
           </View>
 
-          {/* Renderizar las filas con datos */}
           <ScrollView style={styles.dataScroll} nestedScrollEnabled={true}>
             {filteredBobinas.map((bobina, index) => (
               <View key={index} style={styles.row}>

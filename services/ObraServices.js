@@ -1,4 +1,4 @@
-const API_URL = "http://192.168.10.101:3000/obra";
+const API_URL = "https://sineserver-production.up.railway.app/obra";
 
 // Obtener todas las obras
 export const obtenerOtObras = async () => {

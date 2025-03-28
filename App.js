@@ -6,6 +6,7 @@ import Camara from "./screens/Camara";
 import DatosQR from "./screens/DatosQR";
 import DatosManuales from "./screens/DatosManuales"; // ✅ Importar la nueva pantalla
 import AllDataTable from "./screens/AllDataTable"; // ✅ Importar la nueva pantalla
+import ParaDevolverTabla from "./screens/ParaDevolverTabla";
 import { DataProvider } from "./screens/DataContext"; // ✅ Importar el contexto
 
 const Stack = createStackNavigator();
@@ -20,6 +21,10 @@ export default function App() {
           <Stack.Screen name="DatosQR" component={DatosQR} />
           <Stack.Screen name="DatosManuales" component={DatosManuales} />
           <Stack.Screen name="AllDataTable" component={AllDataTable} />
+          <Stack.Screen
+            name="ParaDevolverTabla"
+            component={ParaDevolverTabla}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </DataProvider>

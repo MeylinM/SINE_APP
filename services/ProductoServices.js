@@ -1,43 +1,119 @@
-const API_URL = "http://192.168.10.101:3000/producto";
+const API_HISTORIAL = "https://sineserver-production.up.railway.app/historial"; // Para obtener historial de productos
+const API_PRODUCTO = "https://sineserver-production.up.railway.app/producto"; // Para insertar y actualizar productos
 
-// Obtener información de un producto por matrícula
-export const obtenerProductoPorMatricula = async (matricula) => {
+export const obtenerProductoPorId = async (id) => {
   try {
-    console.log(`🔹 Buscando producto con matrícula: ${matricula}`);
-    const response = await fetch(`${API_URL}/${matricula}`);
+    console.log(`🔹 Buscando historial del producto con ID: ${id}`);
+    const response = await fetch(`${API_HISTORIAL}/id/${id}`);
 
     if (!response.ok) {
+      if (response.status === 404) {
+        console.warn("⚠️ Producto no encontrado por ID");
+        return null;
+      }
+
+      console.warn(
+        `⚠️ Error HTTP (${response.status}) al buscar ID. Tratando como no encontrado.`
+      );
+      return null; // ← esto evita el error y continúa como si no existiera
+    }
+
+    const data = await response.json();
+    console.log("🔹 Historial por ID obtenido:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Error obteniendo historial por ID:", error);
+    return null;
+  }
+};
+
+// **Obtener información de un producto desde HISTORIAL**
+export const obtenerProductoPorMatricula = async (matricula) => {
+  try {
+    console.log(
+      `🔹 Buscando historial del producto con matrícula: ${matricula}`
+    );
+    const response = await fetch(
+      `${API_HISTORIAL}/matricula/${matricula.toString()}`
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.warn("⚠️ Producto no encontrado (404)");
+        return null;
+      }
       console.error("❌ Error HTTP al obtener producto:", response.status);
       throw new Error(`Error HTTP: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log("🔹 Producto obtenido:", data);
+    console.log("🔹 Historial del producto obtenido:", data);
     return data;
   } catch (error) {
-    console.error("❌ Error obteniendo producto:", error);
+    console.error("❌ Error obteniendo historial del producto:", error);
     return null;
   }
 };
+export const obtenerHistorialProductos = async () => {
+  try {
+    console.log("🔹 Obteniendo historial completo de productos...");
+    const response = await fetch(API_HISTORIAL);
 
-// Insertar un nuevo producto si no existe
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ Historial completo recibido:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Error al obtener historial de productos:", error);
+    throw error;
+  }
+};
 export const agregarProducto = async (
+  id,
   matricula,
   observaciones,
-  ID_Almacen,
-  ID_Obra
+  iD_Almacen,
+  iD_Obra
 ) => {
   try {
-    console.log(`🔹 Insertando nuevo producto: ${matricula}`);
-    const response = await fetch(API_URL, {
+    if (!id || !matricula || !observaciones || !iD_Almacen || !iD_Obra) {
+      console.error("❌ Error: Datos obligatorios faltantes:", {
+        id,
+        matricula,
+        observaciones,
+        iD_Almacen,
+        iD_Obra,
+      });
+      return false;
+    }
+
+    const dataToSend = {
+      id: id, // ✅ NUEVO CAMPO
+      matricula: matricula,
+      observaciones: observaciones,
+      almacen_id: iD_Almacen,
+      obra_ot: iD_Obra,
+    };
+
+    console.log("📌 Enviando nuevo producto a la API:", dataToSend);
+
+    const response = await fetch(API_PRODUCTO, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matricula, observaciones, ID_Almacen, ID_Obra }),
+      body: JSON.stringify(dataToSend),
     });
 
     if (!response.ok) {
-      console.error("❌ Error al insertar producto:", response.status);
-      throw new Error(`Error HTTP: ${response.status}`);
+      const errorText = await response.text();
+      console.error(
+        "❌ Error al insertar producto:",
+        response.status,
+        errorText
+      );
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -49,25 +125,33 @@ export const agregarProducto = async (
   }
 };
 
-// Actualizar estado y observaciones de un producto
-export const actualizarProducto = async (
-  matricula,
-  estado,
-  observaciones,
-  ID_Almacen,
-  ID_Obra
-) => {
+export const actualizarProducto = async (id, matricula, observaciones) => {
   try {
-    console.log(`🔹 Actualizando producto ${matricula} con estado: ${estado}`);
-    const response = await fetch(`${API_URL}/${matricula}`, {
+    console.log(
+      `🔹 Actualizando producto con ID: ${id}, Matricula: ${matricula}`
+    );
+
+    const dataToUpdate = {
+      observaciones: observaciones,
+    };
+
+    console.log("📌 Datos enviados a la API para actualización:", dataToUpdate);
+    console.log(JSON.stringify(dataToUpdate));
+
+    const response = await fetch(`${API_PRODUCTO}/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado, observaciones, ID_Almacen, ID_Obra }),
+      body: JSON.stringify(dataToUpdate),
     });
 
     if (!response.ok) {
-      console.error("❌ Error al actualizar producto:", response.status);
-      throw new Error(`Error HTTP: ${response.status}`);
+      const errorText = await response.text();
+      console.error(
+        "❌ Error al actualizar producto:",
+        response.status,
+        errorText
+      );
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
     }
 
     console.log("✅ Producto actualizado correctamente.");

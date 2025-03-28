@@ -41,7 +41,10 @@ export default function HomeScreen() {
         <Text style={globalStyles.buttonText}>MOSTRAR TODOS LOS DATOS</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate("ParaDevolverTabla")}
+      >
         <Text style={globalStyles.buttonText}>MOSTRAR BOBINAS A DEVOLVER</Text>
       </TouchableOpacity>
 
