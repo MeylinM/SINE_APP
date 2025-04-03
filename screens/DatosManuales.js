@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
   Button,
   Alert,
-  BackHandler,
   ScrollView,
   TouchableOpacity,
   Platform,
@@ -15,7 +14,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { getCurrentDateTime } from "../utils/DateHelper";
 import { styles } from "../styles/FormStyles";
-import { DataContext } from "./DataContext"; // ✅ Importar el contexto
 import { Picker } from "@react-native-picker/picker";
 import {
   obtenerAlmacenes,
@@ -45,7 +43,6 @@ export default function DatosManuales({ navigation }) {
   const [fechaParaDevolver, setFechaParaDevolver] = useState("");
   const [empleadoDevuelto, setEmpleadoDevuelto] = useState("");
   const [fechaDevuelto, setFechaDevuelto] = useState("");
-  const [observaciones, setObservaciones] = useState("");
   const [validado, setValidado] = useState(false);
   const [showAlmacenPicker, setShowAlmacenPicker] = useState(false);
   const [showOtObraPicker, setShowOtObraPicker] = useState(false);
@@ -55,11 +52,16 @@ export default function DatosManuales({ navigation }) {
     useState(false);
   const [showEmpleadoDevueltoPicker, setShowEmpleadoDevueltoPicker] =
     useState(false);
-  const backHandler = useRef(null);
   const [almacenes, setAlmacenes] = useState([]);
   const [otObras, setOtObras] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [id, setId] = useState("");
+  const [esOtExistente, setEsOtExistente] = useState(false);
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [nuevaObservacion, setNuevaObservacion] = useState("");
+  const [observacionesOriginales, setObservacionesOriginales] = useState("");
+  const [obsNueva, setObsNueva] = useState("");
+
   useEffect(() => {
     const comprobarUsuariosActivos = async () => {
       try {
@@ -142,7 +144,8 @@ export default function DatosManuales({ navigation }) {
         setOtObra(producto.ot || "");
         setDescripcionObra(producto.descripcion_obra || "");
         setEstado(nuevoEstado);
-        setObservaciones(producto.observaciones || "");
+        const observacionBase = producto.observaciones || "";
+        setObservacionesOriginales(observacionBase);
 
         // Cargar historial: mostrar siempre datos anteriores
         setEmpleadoRecibido(producto.empleado1 || "");
@@ -164,7 +167,8 @@ export default function DatosManuales({ navigation }) {
         setFechaParaDevolver("");
         setEmpleadoDevuelto("");
         setFechaDevuelto("");
-        setObservaciones("");
+        setObservacionesOriginales("");
+        setObsNueva("");
 
         console.log("✅ Producto no encontrado, permitiendo ingreso manual.");
       }
@@ -185,9 +189,6 @@ export default function DatosManuales({ navigation }) {
     console.log("📌 OT Obras en estado:", otObras);
     console.log("📌 Empleados en estado:", empleados);
   }, [almacenes, otObras, empleados]);
-
-  const [datosGuardadosTemporalmente, setDatosGuardadosTemporalmente] =
-    useState(null);
 
   function formatFechaParaMySQL(fechaISO) {
     const fecha = new Date(fechaISO);
@@ -304,21 +305,23 @@ export default function DatosManuales({ navigation }) {
       // Verificamos si el producto ya existe por matrícula
       const productoExistente = await obtenerProductoPorMatricula(matricula);
       let productoIdFinal = id;
+      const observacionesFinal = obsNueva.trim() || "Sin observaciones";
 
       if (productoExistente) {
         // ✅ Si ya existe por matrícula, lo actualizamos
+
         const actualizado = await actualizarProducto(
           id,
           matricula,
-          observaciones
+          observacionesFinal
         );
-
         if (!actualizado) {
           Alert.alert("Error", "No se pudo actualizar el producto.");
           return;
         }
 
         console.log("✅ Producto actualizado correctamente.");
+        setObsNueva("");
       } else {
         // 🛑 Validación adicional: evitar duplicado por ID
         const productoPorId = await obtenerProductoPorId(id);
@@ -332,10 +335,11 @@ export default function DatosManuales({ navigation }) {
         }
 
         // ✅ Insertar producto nuevo
+
         const productoInsertado = await agregarProducto(
           id,
           matricula,
-          observaciones,
+          observacionesFinal,
           idAlmacenFinal,
           otObraFinal
         );
@@ -370,14 +374,6 @@ export default function DatosManuales({ navigation }) {
     }
   };
 
-  // useEffect detectará el cambio en datosGuardadosTemporalmente y navegará cuando se haya actualizado
-  useEffect(() => {
-    if (datosGuardadosTemporalmente) {
-      navigation.navigate("Home");
-      setDatosGuardadosTemporalmente(null); // Resetear para evitar múltiples navegaciones
-    }
-  }, [datosGuardadosTemporalmente]);
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar hidden />
@@ -396,6 +392,7 @@ export default function DatosManuales({ navigation }) {
         <Text style={styles.label}>Matrícula:</Text>
         <View style={styles.matriculaContainer}>
           <TextInput
+            style={styles.matriculaInput}
             value={matricula}
             onChangeText={setMatricula}
             editable={!validado}
@@ -423,11 +420,9 @@ export default function DatosManuales({ navigation }) {
         <Text style={styles.staticText}>{estado}</Text>
 
         <Text style={styles.label}>Almacén:</Text>
-        <View
-          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
-        >
+        <View style={[styles.input, styles.inputRow]}>
           <TextInput
-            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
+            style={styles.inputFlex}
             value={
               almacenes.find((item) => item.id === almacen)?.nombre || almacen
             }
@@ -440,7 +435,7 @@ export default function DatosManuales({ navigation }) {
             <>
               <TouchableOpacity
                 onPress={() => setShowAlmacenPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                style={styles.pickerIOSButton}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
@@ -449,20 +444,8 @@ export default function DatosManuales({ navigation }) {
                 transparent
                 animationType="slide"
               >
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 20,
-                      borderRadius: 10,
-                    }}
-                  >
+                <View style={styles.modalBackground}>
+                  <View style={styles.modalContent}>
                     <Picker
                       selectedValue={almacen}
                       onValueChange={(itemValue) => setAlmacen(itemValue)}
@@ -491,7 +474,7 @@ export default function DatosManuales({ navigation }) {
             <Picker
               selectedValue={almacen}
               onValueChange={(itemValue) => setAlmacen(itemValue)}
-              style={{ width: 30, height: "100%" }}
+              style={styles.pickerIOSButton}
               enabled={validado && estado === "Recibido"}
               mode="dropdown"
             >
@@ -502,7 +485,7 @@ export default function DatosManuales({ navigation }) {
                   <Picker.Item
                     key={`almacen-${item.id}`}
                     label={item.nombre}
-                    value={item.id}
+                    value={item.nombre}
                   />
                 ))}
             </Picker>
@@ -510,9 +493,7 @@ export default function DatosManuales({ navigation }) {
         </View>
 
         <Text style={styles.label}>OT Obra:</Text>
-        <View
-          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
-        >
+        <View style={[styles.input, styles.inputRow]}>
           <TextInput
             style={{ flex: 1, height: "100%" }}
             value={otObra}
@@ -529,7 +510,7 @@ export default function DatosManuales({ navigation }) {
             <>
               <TouchableOpacity
                 onPress={() => setShowOtObraPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                style={styles.pickerIOSButton}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
@@ -538,20 +519,8 @@ export default function DatosManuales({ navigation }) {
                 transparent
                 animationType="slide"
               >
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 20,
-                      borderRadius: 10,
-                    }}
-                  >
+                <View style={styles.modalBackground}>
+                  <View style={styles.modalContent}>
                     <Picker
                       selectedValue={otObra}
                       onValueChange={(itemValue) => setOtObra(itemValue)}
@@ -585,9 +554,18 @@ export default function DatosManuales({ navigation }) {
               onValueChange={(itemValue) => {
                 if (itemValue !== "custom" && itemValue !== "disabled") {
                   setOtObra(itemValue);
+
+                  const otExistente = otObras.find((o) => o.ot === itemValue);
+                  if (otExistente) {
+                    setDescripcionObra(otExistente.descripcion || "");
+                    setEsOtExistente(true);
+                  } else {
+                    setDescripcionObra("");
+                    setEsOtExistente(false);
+                  }
                 }
               }}
-              style={{ width: 30, height: "100%" }}
+              style={styles.pickerIOSButton}
               enabled={validado && estado === "Recibido"}
               mode="dropdown"
             >
@@ -604,15 +582,13 @@ export default function DatosManuales({ navigation }) {
           style={styles.input}
           value={descripcionObra}
           onChangeText={setDescripcionObra}
-          editable={validado && estado === "Recibido"}
+          editable={validado && estado === "Recibido" && !esOtExistente}
         />
 
         <Text style={styles.label}>Información Recibido:</Text>
-        <View
-          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
-        >
+        <View style={[styles.input, styles.inputRow]}>
           <TextInput
-            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
+            style={styles.inputFlex}
             value={empleadoRecibido}
             onChangeText={setEmpleadoRecibido}
             placeholder="Introduce o selecciona Empleados"
@@ -623,7 +599,7 @@ export default function DatosManuales({ navigation }) {
             <>
               <TouchableOpacity
                 onPress={() => setShowEmpleadoRecibidoPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                style={styles.pickerIOSButton}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
@@ -632,20 +608,8 @@ export default function DatosManuales({ navigation }) {
                 transparent
                 animationType="slide"
               >
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 20,
-                      borderRadius: 10,
-                    }}
-                  >
+                <View style={styles.modalBackground}>
+                  <View style={styles.modalContent}>
                     <Picker
                       selectedValue={empleadoRecibido}
                       onValueChange={(itemValue) => {
@@ -680,7 +644,7 @@ export default function DatosManuales({ navigation }) {
                 setEmpleadoRecibido(itemValue);
                 setFechaRecibido(getCurrentDateTime());
               }}
-              style={{ width: 30, height: "100%" }}
+              style={styles.pickerIOSButton}
               enabled={validado && estado === "Recibido"}
               mode="dropdown"
             >
@@ -698,11 +662,9 @@ export default function DatosManuales({ navigation }) {
         <Text style={styles.staticText}>{fechaRecibido}</Text>
 
         <Text style={styles.label}>Información Para Devolver:</Text>
-        <View
-          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
-        >
+        <View style={[styles.input, styles.inputRow]}>
           <TextInput
-            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
+            style={styles.inputFlex}
             value={empleadoParaDevolver}
             onChangeText={setEmpleadoParaDevolver} // Permite escritura manual
             placeholder="Introduce o selecciona Empleados"
@@ -713,7 +675,7 @@ export default function DatosManuales({ navigation }) {
             <>
               <TouchableOpacity
                 onPress={() => setShowEmpleadoParaDevolverPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                style={styles.pickerStyle}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
@@ -722,20 +684,8 @@ export default function DatosManuales({ navigation }) {
                 transparent
                 animationType="slide"
               >
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 20,
-                      borderRadius: 10,
-                    }}
-                  >
+                <View style={styles.modalBackground}>
+                  <View style={styles.modalContent}>
                     <Picker
                       selectedValue={empleadoParaDevolver}
                       onValueChange={(itemValue) => {
@@ -770,7 +720,7 @@ export default function DatosManuales({ navigation }) {
                 setEmpleadoParaDevolver(itemValue);
                 setFechaParaDevolver(getCurrentDateTime());
               }}
-              style={{ width: 30, height: "100%" }}
+              style={styles.pickerStyle}
               enabled={validado && estado === "Para Devolver"}
               mode="dropdown"
             >
@@ -790,11 +740,9 @@ export default function DatosManuales({ navigation }) {
         <Text style={styles.staticText}>{fechaParaDevolver}</Text>
 
         <Text style={styles.label}>Información Devuelto:</Text>
-        <View
-          style={[styles.input, { flexDirection: "row", alignItems: "center" }]}
-        >
+        <View style={[styles.input, styles.inputRow]}>
           <TextInput
-            style={{ flex: 1, height: "100%", textAlignVertical: "center" }}
+            style={styles.inputFlex}
             value={empleadoDevuelto}
             onChangeText={setEmpleadoDevuelto} // Permite escritura manual
             placeholder="Introduce o selecciona Empleados"
@@ -805,7 +753,7 @@ export default function DatosManuales({ navigation }) {
             <>
               <TouchableOpacity
                 onPress={() => setShowEmpleadoDevueltoPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                style={styles.pickerStyle}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
@@ -814,20 +762,8 @@ export default function DatosManuales({ navigation }) {
                 transparent
                 animationType="slide"
               >
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 20,
-                      borderRadius: 10,
-                    }}
-                  >
+                <View style={styles.modalBackground}>
+                  <View style={styles.modalContent}>
                     <Picker
                       selectedValue={empleadoDevuelto}
                       onValueChange={(itemValue) => {
@@ -862,7 +798,7 @@ export default function DatosManuales({ navigation }) {
                 setEmpleadoDevuelto(itemValue);
                 setFechaDevuelto(getCurrentDateTime());
               }}
-              style={{ width: 30, height: "100%" }}
+              style={styles.pickerStyle}
               enabled={validado && estado === "Devuelto"}
               mode="dropdown"
             >
@@ -882,12 +818,25 @@ export default function DatosManuales({ navigation }) {
         <Text style={styles.staticText}>{fechaDevuelto}</Text>
 
         <Text style={styles.label}>Observaciones:</Text>
-        <TextInput
-          style={styles.input}
-          value={observaciones}
-          onChangeText={setObservaciones}
-          editable={true}
-        />
+        <View style={styles.observacionesBox}>
+          {[...observacionesOriginales.split(";"), ...obsNueva.split(";")]
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .map((obs, index) => (
+              <View key={index} style={styles.observacionItem}>
+                <Text>{`obs ${index + 1} = ${obs}`}</Text>
+                <View style={styles.observacionLinea} />
+              </View>
+            ))}
+        </View>
+
+        <View style={{ marginBottom: 16 }}>
+          <Button
+            title="Agregar Observación"
+            onPress={() => setMostrarModal(true)}
+            color="#34a853"
+          />
+        </View>
 
         <View style={styles.buttonContainer}>
           <Button
@@ -903,6 +852,68 @@ export default function DatosManuales({ navigation }) {
           />
         </View>
       </ScrollView>
+      <Modal
+        visible={mostrarModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setMostrarModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={styles.observacionTitulo}>Nueva observación</Text>
+
+            <TextInput
+              style={styles.observacionInput}
+              placeholder="Escribe aquí..."
+              value={nuevaObservacion}
+              onChangeText={setNuevaObservacion}
+              multiline
+            />
+
+            <View style={styles.modalFooter}>
+              <Button
+                title="Cancelar"
+                color="#FF3B30"
+                onPress={() => {
+                  setNuevaObservacion("");
+                  setMostrarModal(false);
+                }}
+              />
+              <Button
+                title="Agregar"
+                color="#34a853"
+                onPress={() => {
+                  const nueva = nuevaObservacion.trim();
+                  if (!nueva) return;
+
+                  const partesNuevas = obsNueva
+                    .split(";")
+                    .map((t) => t.trim().toLowerCase());
+
+                  const partesOriginales = observacionesOriginales
+                    .split(";")
+                    .map((t) => t.trim().toLowerCase());
+
+                  const yaExiste =
+                    partesNuevas.includes(nueva.toLowerCase()) ||
+                    partesOriginales.includes(nueva.toLowerCase());
+
+                  if (!yaExiste) {
+                    const nuevoTexto =
+                      obsNueva.trim() !== "" ? `${obsNueva}; ${nueva}` : nueva;
+
+                    setObsNueva(nuevoTexto);
+                    setNuevaObservacion(""); // limpia el campo del modal
+                    setMostrarModal(false);
+                  } else {
+                    Alert.alert("Duplicado", "Esa observación ya existe.");
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

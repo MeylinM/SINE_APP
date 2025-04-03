@@ -48,7 +48,6 @@ export default function DatosQR({ route, navigation }) {
   const [fechaParaDevolver, setFechaParaDevolver] = useState("");
   const [empleadoDevuelto, setEmpleadoDevuelto] = useState("");
   const [fechaDevuelto, setFechaDevuelto] = useState("");
-  const [observaciones, setObservaciones] = useState("");
   const [validado, setValidado] = useState(false);
   const [matricula, setMatricula] = useState("");
   const [showAlmacenPicker, setShowAlmacenPicker] = useState(false);
@@ -63,6 +62,11 @@ export default function DatosQR({ route, navigation }) {
   const [almacenes, setAlmacenes] = useState([]);
   const [otObras, setOtObras] = useState([]);
   const [empleados, setEmpleados] = useState([]);
+  const [esOtExistente, setEsOtExistente] = useState(false);
+  const [observacionesOriginales, setObservacionesOriginales] = useState("");
+  const [obsNueva, setObsNueva] = useState("");
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [nuevaObservacion, setNuevaObservacion] = useState("");
 
   useEffect(() => {
     if (qrData) {
@@ -106,7 +110,8 @@ export default function DatosQR({ route, navigation }) {
         setOtObra(producto.ot || "");
         setDescripcionObra(producto.descripcion_obra || "");
         setEstado(nuevoEstado);
-        setObservaciones(producto.observaciones || "");
+        setObservacionesOriginales(producto.observaciones || "");
+        setObsNueva("");
         setEmpleadoRecibido(producto.empleado1 || "");
         setFechaRecibido(producto.fecha1 || "");
         setEmpleadoParaDevolver(producto.empleado2 || "");
@@ -255,13 +260,14 @@ export default function DatosQR({ route, navigation }) {
       const productoExistente = await obtenerProductoPorId(id);
 
       let productoIdFinal = id;
+      const observacionesFinal = obsNueva.trim() || "Sin observaciones";
 
       if (productoExistente) {
         // ✅ Si ya existe por matrícula, lo actualizamos
         const actualizado = await actualizarProducto(
           id,
           matricula,
-          observaciones
+          observacionesFinal
         );
 
         if (!actualizado) {
@@ -286,7 +292,7 @@ export default function DatosQR({ route, navigation }) {
         const productoInsertado = await agregarProducto(
           id,
           matricula,
-          observaciones,
+          observacionesFinal,
           idAlmacenFinal,
           otObraFinal
         );
@@ -437,7 +443,7 @@ export default function DatosQR({ route, navigation }) {
                   <Picker.Item
                     key={`almacen-${item.id}`}
                     label={item.nombre}
-                    value={item.id}
+                    value={item.nombre}
                   />
                 ))}
             </Picker>
@@ -520,6 +526,15 @@ export default function DatosQR({ route, navigation }) {
               onValueChange={(itemValue) => {
                 if (itemValue !== "custom" && itemValue !== "disabled") {
                   setOtObra(itemValue);
+
+                  const otExistente = otObras.find((o) => o.ot === itemValue);
+                  if (otExistente) {
+                    setDescripcionObra(otExistente.descripcion || "");
+                    setEsOtExistente(true);
+                  } else {
+                    setDescripcionObra("");
+                    setEsOtExistente(false);
+                  }
                 }
               }}
               style={{ width: 30, height: "100%" }}
@@ -539,7 +554,7 @@ export default function DatosQR({ route, navigation }) {
           style={styles.input}
           value={descripcionObra}
           onChangeText={setDescripcionObra}
-          editable={validado && estado === "Recibido"}
+          editable={validado && estado === "Recibido" && !esOtExistente}
         />
 
         <Text style={styles.label}>Información Recibido:</Text>
@@ -817,12 +832,25 @@ export default function DatosQR({ route, navigation }) {
         <Text style={styles.staticText}>{fechaDevuelto}</Text>
 
         <Text style={styles.label}>Observaciones:</Text>
-        <TextInput
-          style={styles.input}
-          value={observaciones}
-          onChangeText={setObservaciones}
-          editable={true}
-        />
+        <View style={styles.observacionesBox}>
+          {[...observacionesOriginales.split(";"), ...obsNueva.split(";")]
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .map((obs, index) => (
+              <View key={index} style={styles.observacionItem}>
+                <Text>{`obs ${index + 1} = ${obs}`}</Text>
+                <View style={styles.observacionLinea} />
+              </View>
+            ))}
+        </View>
+
+        <View style={{ marginBottom: 16 }}>
+          <Button
+            title="Agregar Observación"
+            onPress={() => setMostrarModal(true)}
+            color="#34a853"
+          />
+        </View>
 
         <View style={styles.buttonContainer}>
           <Button
@@ -838,6 +866,70 @@ export default function DatosQR({ route, navigation }) {
           />
         </View>
       </ScrollView>
+      <Modal
+        visible={mostrarModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setMostrarModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={styles.observacionTitulo}>Nueva observación</Text>
+
+            <TextInput
+              style={styles.observacionInput}
+              placeholder="Escribe aquí..."
+              value={nuevaObservacion}
+              onChangeText={setNuevaObservacion}
+              multiline
+            />
+
+            <View style={styles.modalFooter}>
+              <Button
+                title="Cancelar"
+                color="#FF3B30"
+                onPress={() => {
+                  setNuevaObservacion("");
+                  setMostrarModal(false);
+                }}
+              />
+              <Button
+                title="Agregar"
+                color="#34a853"
+                onPress={() => {
+                  const nueva = nuevaObservacion.trim();
+                  if (!nueva) return;
+
+                  const partesNuevas = obsNueva
+                    .split(";")
+                    .map((t) => t.trim().toLowerCase())
+                    .filter(Boolean);
+
+                  const partesOriginales = observacionesOriginales
+                    .split(";")
+                    .map((t) => t.trim().toLowerCase())
+                    .filter(Boolean);
+
+                  const yaExiste =
+                    partesNuevas.includes(nueva.toLowerCase()) ||
+                    partesOriginales.includes(nueva.toLowerCase());
+
+                  if (!yaExiste) {
+                    const nuevoTexto =
+                      obsNueva.trim() !== "" ? `${obsNueva}; ${nueva}` : nueva;
+
+                    setObsNueva(nuevoTexto);
+                    setNuevaObservacion("");
+                    setMostrarModal(false);
+                  } else {
+                    Alert.alert("Duplicado", "Esa observación ya existe.");
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

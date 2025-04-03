@@ -88,4 +88,65 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 5,
   },
+
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  inputFlex: {
+    flex: 1,
+    height: "100%",
+    textAlignVertical: "center",
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+  },
+  pickerIOSButton: {
+    width: 30,
+    alignItems: "center",
+  },
+  pickerStyle: {
+    width: 30,
+    height: "100%",
+  },
+  observacionesBox: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+    minHeight: 100,
+    justifyContent: "center",
+  },
+  observacionItem: {
+    marginBottom: 6,
+  },
+  observacionLinea: {
+    borderBottomColor: "#ccc",
+    borderBottomWidth: 1,
+    marginTop: 4,
+  },
+  observacionTitulo: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  observacionInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
 });
