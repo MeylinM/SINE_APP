@@ -213,8 +213,14 @@ export default function DatosManuales({ navigation }) {
     try {
       console.log("🔹 Iniciando proceso de guardado...");
 
-      if (!matricula?.trim() || !estado?.trim()) {
-        Alert.alert("Error", "Faltan datos para registrar el estado.");
+      if (
+        !id?.trim() ||
+        !matricula?.trim() ||
+        !almacen?.trim() ||
+        !otObra?.trim() ||
+        !estado?.trim()
+      ) {
+        Alert.alert("Error", "Debes completar todos los campos obligatorios.");
         return;
       }
 
@@ -434,11 +440,20 @@ export default function DatosManuales({ navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowAlmacenPicker(true)}
-                style={styles.pickerIOSButton}
+                onPress={() => {
+                  if (validado && estado === "Recibido") {
+                    setShowAlmacenPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerIOSButton,
+                  !(validado && estado === "Recibido") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Recibido")} // 🔒 importante para bloquear toque
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showAlmacenPicker}
                 transparent
@@ -458,7 +473,7 @@ export default function DatosManuales({ navigation }) {
                         <Picker.Item
                           key={`${item.id}-${index}`}
                           label={item.nombre}
-                          value={item.id}
+                          value={String(item.nombre)}
                         />
                       ))}
                     </Picker>
@@ -509,8 +524,16 @@ export default function DatosManuales({ navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowOtObraPicker(true)}
-                style={styles.pickerIOSButton}
+                onPress={() => {
+                  if (validado && estado === "Recibido") {
+                    setShowOtObraPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerIOSButton,
+                  !(validado && estado === "Recibido") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Recibido")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
@@ -523,7 +546,20 @@ export default function DatosManuales({ navigation }) {
                   <View style={styles.modalContent}>
                     <Picker
                       selectedValue={otObra}
-                      onValueChange={(itemValue) => setOtObra(itemValue)}
+                      onValueChange={(itemValue) => {
+                        setOtObra(itemValue);
+                        const otExistente = otObras.find(
+                          (o) => o.ot === itemValue
+                        );
+                        if (otExistente) {
+                          setDescripcionObra(otExistente.descripcion || "");
+                          setEsOtExistente(true);
+                        } else {
+                          setDescripcionObra("");
+                          setEsOtExistente(false);
+                        }
+                        setShowOtObraPicker(false); // cerrar al seleccionar
+                      }}
                     >
                       <Picker.Item
                         label="Selecciona una OT de obra"
@@ -535,7 +571,7 @@ export default function DatosManuales({ navigation }) {
                           <Picker.Item
                             key={`obra-${item.ot}`}
                             label={item.ot} // solo el número OT
-                            value={item.ot}
+                            value={String(item.ot)}
                           />
                         ))}
                     </Picker>
@@ -598,11 +634,20 @@ export default function DatosManuales({ navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowEmpleadoRecibidoPicker(true)}
-                style={styles.pickerIOSButton}
+                onPress={() => {
+                  if (validado && estado === "Recibido") {
+                    setShowEmpleadoRecibidoPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerIOSButton,
+                  !(validado && estado === "Recibido") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Recibido")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showEmpleadoRecibidoPicker}
                 transparent
@@ -674,8 +719,16 @@ export default function DatosManuales({ navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowEmpleadoParaDevolverPicker(true)}
-                style={styles.pickerStyle}
+                onPress={() => {
+                  if (validado && estado === "Para Devolver") {
+                    setShowEmpleadoParaDevolverPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerStyle,
+                  !(validado && estado === "Para Devolver") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Para Devolver")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
@@ -752,11 +805,20 @@ export default function DatosManuales({ navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowEmpleadoDevueltoPicker(true)}
-                style={styles.pickerStyle}
+                onPress={() => {
+                  if (validado && estado === "Devuelto") {
+                    setShowEmpleadoDevueltoPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerStyle,
+                  !(validado && estado === "Devuelto") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Devuelto")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showEmpleadoDevueltoPicker}
                 transparent
@@ -824,7 +886,7 @@ export default function DatosManuales({ navigation }) {
             .filter(Boolean)
             .map((obs, index) => (
               <View key={index} style={styles.observacionItem}>
-                <Text>{`obs ${index + 1} = ${obs}`}</Text>
+                <Text>{`${obs}`}</Text>
                 <View style={styles.observacionLinea} />
               </View>
             ))}

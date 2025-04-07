@@ -167,8 +167,14 @@ export default function DatosQR({ route, navigation }) {
     try {
       console.log("🔹 Iniciando proceso de guardado...");
 
-      if (!matricula?.trim() || !estado?.trim()) {
-        Alert.alert("Error", "Faltan datos para registrar el estado.");
+      if (
+        !id?.trim() ||
+        !matricula?.trim() ||
+        !almacen?.trim() ||
+        !otObra?.trim() ||
+        !estado?.trim()
+      ) {
+        Alert.alert("Error", "Debes completar todos los campos obligatorios.");
         return;
       }
 
@@ -353,6 +359,7 @@ export default function DatosQR({ route, navigation }) {
         <Text style={styles.label}>Matrícula:</Text>
         <View style={styles.matriculaContainer}>
           <TextInput
+            style={styles.matriculaInput}
             value={matricula}
             onChangeText={setMatricula}
             editable={validado && estado === "Recibido"}
@@ -380,11 +387,20 @@ export default function DatosQR({ route, navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowAlmacenPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                onPress={() => {
+                  if (validado && estado === "Recibido") {
+                    setShowAlmacenPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerIOSButton,
+                  !(validado && estado === "Recibido") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Recibido")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showAlmacenPicker}
                 transparent
@@ -406,7 +422,10 @@ export default function DatosQR({ route, navigation }) {
                   >
                     <Picker
                       selectedValue={almacen}
-                      onValueChange={(itemValue) => setAlmacen(itemValue)}
+                      onValueChange={(itemValue) => {
+                        setAlmacen(itemValue);
+                        setShowAlmacenPicker(false);
+                      }}
                     >
                       <Picker.Item
                         label="Selecciona un Almacén"
@@ -416,10 +435,11 @@ export default function DatosQR({ route, navigation }) {
                         <Picker.Item
                           key={`${item.id}-${index}`}
                           label={item.nombre}
-                          value={item.id}
+                          value={item.nombre} // ← Aquí es donde usas el nombre, no el ID
                         />
                       ))}
                     </Picker>
+
                     <Button
                       title="Cerrar"
                       onPress={() => setShowAlmacenPicker(false)}
@@ -469,11 +489,20 @@ export default function DatosQR({ route, navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowOtObraPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                onPress={() => {
+                  if (validado && estado === "Recibido") {
+                    setShowOtObraPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerIOSButton,
+                  !(validado && estado === "Recibido") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Recibido")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showOtObraPicker}
                 transparent
@@ -495,7 +524,22 @@ export default function DatosQR({ route, navigation }) {
                   >
                     <Picker
                       selectedValue={otObra}
-                      onValueChange={(itemValue) => setOtObra(itemValue)}
+                      onValueChange={(itemValue) => {
+                        setOtObra(itemValue);
+
+                        const otExistente = otObras.find(
+                          (o) => o.ot === itemValue
+                        );
+                        if (otExistente) {
+                          setDescripcionObra(otExistente.descripcion || "");
+                          setEsOtExistente(true);
+                        } else {
+                          setDescripcionObra("");
+                          setEsOtExistente(false);
+                        }
+
+                        setShowOtObraPicker(false); // cierre automático
+                      }}
                     >
                       <Picker.Item
                         label="Selecciona una OT de obra"
@@ -507,7 +551,7 @@ export default function DatosQR({ route, navigation }) {
                           <Picker.Item
                             key={`obra-${item.ot}`}
                             label={item.ot} // solo el número OT
-                            value={item.ot}
+                            value={String(item.ot)}
                           />
                         ))}
                     </Picker>
@@ -572,11 +616,20 @@ export default function DatosQR({ route, navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowEmpleadoRecibidoPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                onPress={() => {
+                  if (validado && estado === "Recibido") {
+                    setShowEmpleadoRecibidoPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerIOSButton,
+                  !(validado && estado === "Recibido") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Recibido")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showEmpleadoRecibidoPicker}
                 transparent
@@ -662,11 +715,20 @@ export default function DatosQR({ route, navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowEmpleadoParaDevolverPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                onPress={() => {
+                  if (validado && estado === "Para Devolver") {
+                    setShowEmpleadoParaDevolverPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerStyle,
+                  !(validado && estado === "Para Devolver") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Para Devolver")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showEmpleadoParaDevolverPicker}
                 transparent
@@ -754,11 +816,20 @@ export default function DatosQR({ route, navigation }) {
           {Platform.OS === "ios" ? (
             <>
               <TouchableOpacity
-                onPress={() => setShowEmpleadoDevueltoPicker(true)}
-                style={{ width: 30, alignItems: "center" }}
+                onPress={() => {
+                  if (validado && estado === "Devuelto") {
+                    setShowEmpleadoDevueltoPicker(true);
+                  }
+                }}
+                style={[
+                  styles.pickerStyle,
+                  !(validado && estado === "Devuelto") && { opacity: 0.5 },
+                ]}
+                disabled={!(validado && estado === "Devuelto")}
               >
                 <Text>▼</Text>
               </TouchableOpacity>
+
               <Modal
                 visible={showEmpleadoDevueltoPicker}
                 transparent
@@ -838,7 +909,7 @@ export default function DatosQR({ route, navigation }) {
             .filter(Boolean)
             .map((obs, index) => (
               <View key={index} style={styles.observacionItem}>
-                <Text>{`obs ${index + 1} = ${obs}`}</Text>
+                <Text>{`${obs}`}</Text>
                 <View style={styles.observacionLinea} />
               </View>
             ))}
