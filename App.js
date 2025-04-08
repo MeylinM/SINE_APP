@@ -8,6 +8,7 @@ import DatosManuales from "./screens/DatosManuales"; // ✅ Importar la nueva pa
 import AllDataTable from "./screens/AllDataTable"; // ✅ Importar la nueva pantalla
 import ParaDevolverTabla from "./screens/ParaDevolverTabla";
 import { DataProvider } from "./screens/DataContext"; // ✅ Importar el contexto
+import ManualScreen from "./screens/PantallaManual"; // ✅ Importar el archivo HTML
 
 const Stack = createStackNavigator();
 
@@ -25,6 +26,7 @@ export default function App() {
             name="ParaDevolverTabla"
             component={ParaDevolverTabla}
           />
+          <Stack.Screen name="ManualU" component={ManualScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </DataProvider>

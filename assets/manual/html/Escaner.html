@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Introducir Manualmente - Manual SINE</title>
+    <title>Escaneo de QR - Manual SINE</title>
     <link rel="icon" type="image/png" href="../../assets/sine_logo.png" />
     <link rel="stylesheet" href="../css/BobinaCL.css" />
   </head>
@@ -11,30 +11,31 @@
       <img src="../../assets/Header.png" alt="Encabezado" />
     </div>
 
-    <h1>Introducir manualmente</h1>
+    <h1>ESCANEO DE QR</h1>
 
     <div class="info-box">
       <h2>¿Qué puedes hacer aquí?</h2>
       <ul>
-        <li>Buscar por matricula</li>
-        <li>Introducir información completamente nueva.</li>
+        <li>Escanear un código QR.</li>
+        <li>Introducir información desde cero.</li>
         <li>Modificar información existente.</li>
       </ul>
     </div>
 
     <div class="section-box">
-      <h2>¿Cómo Buscar por matricula?</h2>
+      <h2>¿Cómo escanear el QR?</h2>
     
       <div class="image-layout">
         <div class="image-box">
-          <img src="../../assets/matricula1.jpeg" alt="Escanear QR" />
-          <img src="../../assets/matricula2.jpg" alt="Confirmación" />
+          <img src="../../assets/EscanerQR.jpg" alt="Escanear QR" />
+          <img src="../../assets/Confirmacion.jpg" alt="Confirmación" />
         </div>
     
         <div class="image-text">
           <p>
-            Introduces la matricula en su campo le das al boton con forma de <strong>Lupa</strong>,
-            busca si esa matricula existe o no.
+            Después de pulsar <strong>"ESCANEAR QR"</strong>, enfoca el código con la cámara.<br />
+            Aparecerá un mensaje de confirmación para asegurarte de que es el código correcto<br />
+            y evitar escaneos accidentales.
           </p>
         </div>
       </div>
@@ -66,7 +67,12 @@
                   <strong>Devuelto:</strong> se podrán editar los campos <strong>Información Devuelto</strong> y <strong>Observaciones</strong>.
                 </li>
                 <li>
-                  El campo <strong>Observaciones</strong> siempre estará disponible para modificaciones, sin importar el estado.
+                  El botón <strong>Agregar Observaciones</strong> siempre estará disponible, sin importar el estado.<br />
+                  Al pulsarlo, se abrirá un recuadro donde podrás añadir una nueva observación.
+                  <ul>
+                    <li>El botón <strong>Agregar</strong> guarda en la lista la observación escrita.</li>
+                    <li>El botón <strong>Cancelar</strong> permite descartar el texto en caso de error o si decides no añadir nada.</li>
+                  </ul>
                 </li>
               </ul>
             </li>
@@ -81,14 +87,17 @@
     
 
     <div class="section-box">
-      <h2>Botón Guardar y Botón Cancelar</h2>
+      <h2>Botones Guardar, Limpiar y Cancelar</h2>
       <ul>
         <li>
-          El botón <strong>Guardar</strong> guarda de forma definitiva la información introducida.
-          Hasta que se pulse este botón, los datos no se almacenan.
+          El botón <strong>Guardar</strong> almacena de forma definitiva la información introducida.
+          Hasta que se pulsa este botón, los datos no se guardan.
         </li>
         <li>
-          El botón <strong>Cancelar</strong> descarta los cambios y vuelve a la pantalla anterior sin guardar nada.
+          El botón <strong>Limpiar</strong> borra todos los campos del formulario, excepto el código QR escaneado, que se mantiene visible.
+        </li>
+        <li>
+          El botón <strong>Cancelar</strong> descarta los cambios y regresa a la pantalla anterior sin guardar nada.
         </li>
       </ul>
     </div>

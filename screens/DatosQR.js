@@ -67,7 +67,7 @@ export default function DatosQR({ route, navigation }) {
   const [obsNueva, setObsNueva] = useState("");
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevaObservacion, setNuevaObservacion] = useState("");
-
+  const [estadoBase, setEstadoBase] = useState("");
   useEffect(() => {
     if (qrData) {
       validarQR();
@@ -118,10 +118,10 @@ export default function DatosQR({ route, navigation }) {
         setFechaParaDevolver(producto.fecha2 || "");
         setEmpleadoDevuelto(producto.empleado3 || "");
         setFechaDevuelto(producto.fecha3 || "");
+        setEstadoBase(producto.estado || "");
       } else {
         setId(qrData);
         setEstado("Recibido");
-        setFechaRecibido(getCurrentDateTime());
       }
 
       setValidado(true);
@@ -340,6 +340,21 @@ export default function DatosQR({ route, navigation }) {
       setDatosGuardadosTemporalmente(null); // Resetear para evitar múltiples navegaciones
     }
   }, [datosGuardadosTemporalmente]);
+  const resetearFormulario = () => {
+    setMatricula("");
+    setEstadoBase("");
+    setAlmacen("");
+    setOtObra("");
+    setDescripcionObra("");
+    setEmpleadoRecibido("");
+    setFechaRecibido("");
+    setEmpleadoParaDevolver("");
+    setFechaParaDevolver("");
+    setEmpleadoDevuelto("");
+    setFechaDevuelto("");
+    setObservacionesOriginales("");
+    setObsNueva("");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -368,7 +383,7 @@ export default function DatosQR({ route, navigation }) {
         </View>
 
         <Text style={styles.label}>Estado:</Text>
-        <Text style={styles.staticText}>{estado}</Text>
+        <Text style={styles.staticText}>{estadoBase}</Text>
 
         <Text style={styles.label}>Almacén:</Text>
         <View
@@ -919,16 +934,21 @@ export default function DatosQR({ route, navigation }) {
           <Button
             title="Agregar Observación"
             onPress={() => setMostrarModal(true)}
-            color="#34a853"
+            color="#6fa5f5"
           />
         </View>
 
         <View style={styles.buttonContainer}>
           <Button
             title="Guardar"
+            color="#34a853"
             onPress={handleGuardar}
-            color="#007AFF"
             disabled={!validado}
+          />
+          <Button
+            title="Limpiar"
+            onPress={resetearFormulario}
+            color="#007AFF"
           />
           <Button
             title="Cancelar"

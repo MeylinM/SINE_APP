@@ -61,6 +61,7 @@ export default function DatosManuales({ navigation }) {
   const [nuevaObservacion, setNuevaObservacion] = useState("");
   const [observacionesOriginales, setObservacionesOriginales] = useState("");
   const [obsNueva, setObsNueva] = useState("");
+  const [estadoBase, setEstadoBase] = useState("");
 
   useEffect(() => {
     const comprobarUsuariosActivos = async () => {
@@ -112,7 +113,7 @@ export default function DatosManuales({ navigation }) {
       const resultado = await obtenerProductoPorMatricula(matricula.toString());
       const producto = Array.isArray(resultado) ? resultado[0] : resultado;
 
-      let estadoActual = (producto?.estado || "").toUpperCase(); // para comparar
+      const estadoActual = (producto?.estado || "").toUpperCase(); // para comparar
       let nuevoEstado = "Recibido"; // valor inicial por defecto
 
       // **Actualizar estado según la lógica de flujo**
@@ -154,23 +155,16 @@ export default function DatosManuales({ navigation }) {
         setFechaParaDevolver(producto.fecha2 || "");
         setEmpleadoDevuelto(producto.empleado3 || "");
         setFechaDevuelto(producto.fecha3 || "");
+        setEstadoBase(producto.estado || "");
       } else {
-        // **Si el producto NO existe, permitir ingreso manual**
-        setId("");
-        setAlmacen("");
-        setOtObra("");
-        setDescripcionObra("");
-        setEstado(nuevoEstado); // Se mantiene en "RECIBIDO"
-        setEmpleadoRecibido("");
-        setFechaRecibido(getCurrentDateTime());
-        setEmpleadoParaDevolver("");
-        setFechaParaDevolver("");
-        setEmpleadoDevuelto("");
-        setFechaDevuelto("");
-        setObservacionesOriginales("");
-        setObsNueva("");
-
-        console.log("✅ Producto no encontrado, permitiendo ingreso manual.");
+        Alert.alert(
+          "Matrícula no encontrada",
+          "La matrícula no existe en la base de datos."
+        );
+        setValidado(false);
+        setMatricula(""); // Limpiar campo matrícula
+        setEstado(""); // por si se quedó algo residual
+        return; // ⛔ Detener el flujo aquí
       }
 
       setValidado(true);
@@ -379,6 +373,24 @@ export default function DatosManuales({ navigation }) {
       Alert.alert("Error", "Ocurrió un problema al guardar los datos.");
     }
   };
+  const resetearFormulario = () => {
+    setValidado(false);
+    setId("");
+    setMatricula("");
+    setEstadoBase("");
+    setAlmacen("");
+    setOtObra("");
+    setDescripcionObra("");
+    setEstado("");
+    setEmpleadoRecibido("");
+    setFechaRecibido("");
+    setEmpleadoParaDevolver("");
+    setFechaParaDevolver("");
+    setEmpleadoDevuelto("");
+    setFechaDevuelto("");
+    setObservacionesOriginales("");
+    setObsNueva("");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -423,7 +435,7 @@ export default function DatosManuales({ navigation }) {
         </View>
 
         <Text style={styles.label}>Estado:</Text>
-        <Text style={styles.staticText}>{estado}</Text>
+        <Text style={styles.staticText}>{estadoBase}</Text>
 
         <Text style={styles.label}>Almacén:</Text>
         <View style={[styles.input, styles.inputRow]}>
@@ -896,16 +908,21 @@ export default function DatosManuales({ navigation }) {
           <Button
             title="Agregar Observación"
             onPress={() => setMostrarModal(true)}
-            color="#34a853"
+            color="#6fa5f5"
           />
         </View>
 
         <View style={styles.buttonContainer}>
           <Button
             title="Guardar"
+            color="#34a853"
             onPress={handleGuardar}
-            color="#007AFF"
             disabled={!validado}
+          />
+          <Button
+            title="Limpiar"
+            onPress={resetearFormulario}
+            color="#007AFF"
           />
           <Button
             title="Cancelar"

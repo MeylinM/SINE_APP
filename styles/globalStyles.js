@@ -24,10 +24,12 @@ export default StyleSheet.create({
     marginBottom: 10,
   },
   buttonText: {
-    color: "white",
-    fontSize: 16,
+    color: "#fff",
     fontWeight: "bold",
+    textAlign: "center", // 🔹 Centra horizontalmente
+    flexWrap: "wrap", // 🔹 Permite que el texto se divida en varias líneas
   },
+
   input: {
     backgroundColor: "#019edf",
     width: "90%",

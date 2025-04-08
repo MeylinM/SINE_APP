@@ -14,6 +14,12 @@ export default function HomeScreen() {
 
   return (
     <View style={globalStyles.container}>
+      <TouchableOpacity
+        style={styles.helpButton}
+        onPress={() => navigation.navigate("ManualU")} // Asegúrate de tener esa pantalla registrada
+      >
+        <Text style={styles.helpButtonText}>?</Text>
+      </TouchableOpacity>
       <Image
         source={require("../assets/header_menu.png")}
         style={styles.headerImage}

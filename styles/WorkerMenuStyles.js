@@ -2,35 +2,63 @@ import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
   headerImage: {
-    position: "absolute", // Se superpone al título
-    top: 0, // Arriba
-    width: "112%", // La imagen ocupa todo el ancho
-    height: 300, // 🔹 Reduje la altura para dar más espacio
-    resizeMode: "cover", // Ajusta sin distorsionarse
-    marginBottom: 15, // 🔹 Acerca la imagen al título
+    position: "absolute",
+    top: 0,
+    width: "112%",
+    height: 300,
+    resizeMode: "cover",
+    marginBottom: 15,
   },
   title: {
-    fontSize: 22, // 🔹 Ligeramente más pequeño
+    fontSize: 22,
     fontWeight: "bold",
     color: "#4a4a4a",
-    marginTop: 270, // 🔹 Ajustado para compensar el cambio en la imagen
-    marginBottom: 25, // 🔹 Menos espacio debajo del título
+    marginTop: 270,
+    marginBottom: 25,
     textAlign: "center",
+    width: "85%", // 🔹 Controla la anchura para evitar desbordes
+    alignSelf: "center", // 🔹 Centrado horizontal
   },
   button: {
     backgroundColor: "#019edf",
-    paddingVertical: 15, // 🔹 Reducido para hacer los botones más pequeños
-    paddingHorizontal: 25, // 🔹 Ajustado para mantener proporción
-    borderRadius: 20, // 🔹 Ligeramente menor para un mejor ajuste
-    width: "75%", // 🔹 Más estrecho para que entren mejor
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 20,
+    width: "75%",
     alignItems: "center",
-    marginBottom: 20, // 🔹 Menos espacio entre botones
+    marginBottom: 20,
+    alignSelf: "center", // 🔹 Centrado horizontal
   },
   footer: {
-    position: "absolute", // Se superpone al botón
-    bottom: 15, // 🔹 Más arriba para dar espacio
-    fontSize: 12, // 🔹 Más pequeño para que no ocupe mucho
+    position: "absolute",
+    bottom: 15,
+    fontSize: 12,
     color: "#0096FF",
     textAlign: "center",
+    width: "85%", // 🔹 Mismo ancho que el título
+    alignSelf: "center", // 🔹 Centrado horizontal
+  },
+  helpButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#007BFF",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+
+  helpButtonText: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "bold",
   },
 });

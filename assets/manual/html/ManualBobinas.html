@@ -1,0 +1,739 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manual de Usuario - SINE</title>
+  <link rel="icon" type="image/png" href="../../img/sine_logo.png">
+  
+  <style>
+    /* RESET GENERAL */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* BODY autoajustable sin flex */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #e1e5e6;
+  color: #333;
+  min-height: 100vh;
+  width: 100%;
+}
+
+
+/* CABECERA */
+.header-image {
+  position: relative;
+  width: 105vw; /* un poco más ancho que la pantalla */
+  height: 190px; /* más alto que por defecto */
+  margin: 0 auto 15px auto;
+  overflow: hidden;
+}
+
+.header-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* PIE DE PÁGINA */
+.footer-image {
+  position: relative;
+  width: 105vw;
+  height: 100px;
+  overflow: hidden;
+}
+
+.footer-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+/*titulos*/
+h1 {
+  color: #019edf;
+  font-size: 28px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+/* CONTENEDOR INDEX */
+.content {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  text-align: center;
+}
+
+/* TÍTULOS EN INDEX */
+.content h2 {
+  color: #019edf;
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+/* TEXTOS EN INDEX */
+.content p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* ENLACES DE NAVEGACIÓN */
+.nav-links {
+  list-style: none;
+  padding: 0;
+  margin-top: 16px;
+}
+
+.nav-links li {
+  margin: 12px 0;
+}
+
+.nav-links a {
+  color: #019edf;
+  padding: 12px 20px;
+  border-radius: 12px;
+  display: inline-block;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.nav-links a:hover {
+  background-color: #d4effa;
+  color: #017fb5;
+}
+
+.info-box {
+  background-color: #019de8;
+  color: #000;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px auto;
+  max-width: 500px;
+  width: 100%;
+  text-align: center; /* Centra todo el texto */
+}
+
+.info-box h2 {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+.info-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  display: inline-block;
+  text-align: left; /* Alinea los li correctamente */
+}
+
+.info-box li {
+  position: relative;
+  padding-left: 1.5em;
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.info-box li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 18px;
+  color: #000;
+}
+
+
+
+
+
+/* BLOQUE NORMAL (BLANCO) */
+.section-box {
+  background-color: transparent; /* fuera el fondo blanco */
+  max-width: 800px;
+  width: 100%;
+  margin: 16px auto;
+  padding: 20px;
+}
+
+/* TÍTULO EN SECTIONS */
+.section-box h2 {
+  color:#253025;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+/* LISTAS EN SECTIONS */
+.section-box ul {
+  padding-left: 1.2em;
+}
+
+.section-box li {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+
+.section-box p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #000;
+  text-align: justify;
+  margin: 0 auto 16px auto;
+  max-width: 600px;
+}
+
+.image-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.image-text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #000;
+  text-align: justify;
+  max-width: 700px;
+  padding: 0 12px;
+}
+
+.image-box {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.image-box img {
+  max-width: 220px;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+
+.bloque-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.texto-superior {
+  max-width: 600px;
+  text-align: justify;
+  font-size: 16px;
+  color: #000;
+  line-height: 1.5;
+}
+
+
+/* RESPONSIVE PARA MÓVIL */
+@media (max-width: 600px) {
+  .content,
+  .section-box,
+  .info-box {
+    padding: 16px;
+    margin: 12px auto;
+  }
+
+  h1,
+  h2 {
+    font-size: 22px;
+  }
+
+  p,
+  li,
+  .nav-links a {
+    font-size: 15px;
+  }
+
+  .nav-links a {
+    padding: 10px 16px;
+  }
+}
+
+.volver-indice {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.volver-indice a {
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.volver-indice a:hover {
+  text-decoration: underline;
+}
+
+.separador-seccion {
+  border-top: 1px solid #ccc;
+  margin: 30px auto 30px auto; 
+  max-width: 800px;
+  width: 90%;
+}
+    body { scroll-behavior: smooth; }
+    .nav-links a {
+      text-decoration: none;
+      color: #007BFF;
+      font-weight: bold;
+    }
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+    /* Modal */
+    .img-modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.9);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.img-modal.active {
+  display: flex;
+}
+
+.img-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #fff;
+  transition: 0.3s ease;
+}
+.modal-scroll-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: start;
+}
+
+body.modal-abierto {
+  overflow: hidden;
+  touch-action: none; /* Evita zoom no deseado fuera del modal */
+  position: fixed;
+  width: 100%;
+}
+
+
+.img-modal img.tabla {
+  min-width: 1400px;
+  max-width: none;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+}
+
+
+
+.img-close {
+  margin-top: 20px;
+  background: #fff;
+  color: #000;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.tabla-ancha {
+  width: 100%;
+  overflow-x: auto;
+  padding: 8px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.tabla-ancha img {
+  min-width: 800px;
+  max-width: none;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+}
+
+
+  </style>
+</head>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.createElement("div");
+    modal.classList.add("img-modal");
+    document.body.appendChild(modal);
+
+    const modalImg = document.createElement("img");
+    const closeBtn = document.createElement("button");
+    closeBtn.classList.add("img-close");
+    closeBtn.innerText = "Cerrar";
+
+    let scrollWrapper = null;
+
+    document.querySelectorAll("img").forEach((img) => {
+      img.style.cursor = "zoom-in";
+      img.addEventListener("click", () => {
+        modal.innerHTML = ""; // limpia el modal antes de meter cosas nuevas
+
+        modalImg.src = img.src;
+        modalImg.className = img.classList.contains("tabla") ? "tabla" : "";
+
+        if (img.classList.contains("tabla")) {
+          scrollWrapper = document.createElement("div");
+          scrollWrapper.classList.add("modal-scroll-wrapper");
+          scrollWrapper.appendChild(modalImg);
+          modal.appendChild(scrollWrapper);
+        } else {
+          modal.appendChild(modalImg);
+        }
+
+        modal.appendChild(closeBtn); // siempre va al final
+        modal.classList.add("active");
+        document.body.classList.add("modal-abierto");
+
+      });
+    });
+
+    closeBtn.addEventListener("click", () => {
+      modal.classList.remove("active");
+      document.body.classList.remove("modal-abierto");
+      modalImg.src = "";
+      modalImg.className = "";
+      scrollWrapper = null;
+    });
+  });
+</script>
+
+
+
+
+<body>
+  <div class="header-image">
+    <img src="../../img/Header.png" alt="Encabezado" />
+  </div>
+
+  <div class="content" id="inicio">
+    <h2>MENÚ PRINCIPAL</h2>
+    <p>
+    <strong>Bienvenido/a</strong> al manual de uso de la aplicación <strong>SINE Ingeniería Eléctrica</strong>.
+      Esta aplicación está dirigida a los <strong>empleados</strong> para que puedan llevar
+      la gestión de las bobinas.
+    </p>
+    <p>Selecciona una sección para obtener ayuda:</p>
+
+    <ul class="nav-links">
+      <li><a href="#escaner">Escanear QR de las Bobinas</a></li>
+      <li><a href="#manual">Introducir Bobinas manualmente</a></li>
+      <li><a href="#mostrart">Mostrar todos los datos de las bobinas</a></li>
+      <li><a href="#mostrarpd">Mostrar Bobinas a Devolver</a></li>
+    </ul>
+  </div>
+
+
+<div class="separador-seccion"></div>
+
+<div class="content" id="escaner">
+  <h1>ESCANEO DE QR</h1>
+  <div class="info-box">
+    <h2>¿Qué puedes hacer aquí?</h2>
+    <ul>
+      <li>Escanear un código QR.</li>
+      <li>Introducir información desde cero.</li>
+      <li>Modificar información existente.</li>
+    </ul>
+  </div>
+  <div class="section-box">
+    <h2>¿Cómo escanear el QR?</h2>
+    <div class="image-layout">
+      <div class="image-box">
+        <img src="../../img/EscanerQR.jpg" alt="Escanear QR" />
+        <img src="../../img/Confirmacion.jpg" alt="Confirmación" />
+      </div>
+      <div class="image-text">
+        <p>
+          Después de pulsar <strong>"ESCANEAR QR"</strong>, enfoca el código con la cámara.<br />
+          Aparecerá un mensaje de confirmación para asegurarte de que es el código correcto<br />
+          y evitar escaneos accidentales.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Introducir o modificar bobinas</h2>
+    <div class="image-layout">
+      <div class="image-box">
+        <img src="../../img/Formulario1.jpg" alt="Formulario 1" />
+        <img src="../../img/Formulario2.jpg" alt="Formulario 2" />
+      </div>
+      <div class="image-text">
+        <ul>
+          <li>
+            <strong>Si la bobina ya existe:</strong> se cargarán automáticamente los datos guardados previamente. 
+            Solo se podrán modificar los campos habilitados según el estado actual:
+            <ul>
+              <li><strong>Para Devolver:</strong> se podrán editar los campos <strong>Información Para Devolver</strong> y <strong>Observaciones</strong>.</li>
+              <li><strong>Devuelto:</strong> se podrán editar los campos <strong>Información Devuelto</strong> y <strong>Observaciones</strong>.</li>
+              <li>El botón <strong>Agregar Observaciones</strong> siempre estará disponible, sin importar el estado.<br />
+                Al pulsarlo, se abrirá un recuadro donde podrás añadir una nueva observación.
+                <ul>
+                  <li>El botón <strong>Agregar</strong> guarda en la lista la observación escrita.</li>
+                  <li>El botón <strong>Cancelar</strong> permite descartar el texto en caso de error o si decides no añadir nada.</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Si la bobina no existe:</strong> se introducirán los datos desde cero, basados en el código QR escaneado.
+            Se podrán rellenar todos los campos correspondientes al estado <strong>Recibido</strong>, excepto los reservados para estados posteriores.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Botones Guardar, Limpiar y Cancelar</h2>
+    <ul>
+      <li>El botón <strong>Guardar</strong> almacena de forma definitiva la información introducida.</li>
+      <li>El botón <strong>Limpiar</strong> borra todos los campos del formulario, excepto el código QR escaneado.</li>
+      <li>El botón <strong>Cancelar</strong> descarta los cambios y regresa a la pantalla anterior sin guardar nada.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="separador-seccion"></div>
+
+<div class="content" id="manual">
+  <h1>Introducir manualmente</h1>
+  <div class="info-box">
+    <h2>¿Qué puedes hacer aquí?</h2>
+    <ul>
+      <li>Buscar por matrícula.</li>
+      <li>Modificar información existente.</li>
+    </ul>
+  </div>
+  <div class="section-box">
+    <h2>¿Cómo Buscar por matrícula?</h2>
+    <div class="image-layout">
+      <div class="image-box">
+        <img src="../../img/matricula1.jpeg" alt="Escanear QR" />
+        <img src="../../img/matricula2.jpg" alt="Confirmación" />
+      </div>
+      <div class="image-text">
+        <p>
+          Introduce la matrícula en su campo y pulsa el botón con forma de <strong>lupa</strong>.<br />
+          El sistema comprobará si existe una bobina asociada a esa matrícula.
+        </p>          
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Modificar bobinas</h2>
+    <div class="image-layout">
+      <div class="image-box">
+        <img src="../../img/Formulario3.jpg" alt="Formulario 3" />
+        <img src="../../img/Formulario4.jpg" alt="Formulario 4" />
+      </div>
+      <div class="image-text">
+        <ul>
+          <li>
+            <strong>Si la bobina ya existe:</strong> se cargarán automáticamente los datos guardados previamente. 
+            Solo se podrán modificar los campos habilitados según el estado actual:
+            <ul>
+              <li><strong>Para Devolver:</strong> se podrán editar los campos <strong>Información Para Devolver</strong> y <strong>Observaciones</strong>.</li>
+              <li><strong>Devuelto:</strong> se podrán editar los campos <strong>Información Devuelto</strong> y <strong>Observaciones</strong>.</li>
+              <li>El botón <strong>Agregar Observaciones</strong> siempre estará disponible, sin importar el estado.<br />
+                Al pulsarlo, se abrirá un recuadro donde podrás añadir una nueva observación.
+                <ul>
+                  <li>El botón <strong>Agregar</strong> guarda en la lista la observación escrita.</li>
+                  <li>El botón <strong>Cancelar</strong> permite descartar el texto en caso de error o si decides no añadir nada.</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Si la bobina no existe:</strong> aparecerá un mensaje indicando que no se ha encontrado ninguna bobina con esa matrícula.
+            No será posible añadir una nueva bobina desde esta pantalla.
+          </li>                
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Botones Guardar, Limpiar y Cancelar</h2>
+    <ul>
+      <li>El botón <strong>Guardar</strong> almacena de forma definitiva la información introducida.</li>
+      <li>El botón <strong>Limpiar</strong> borra todos los campos del formulario, excepto el código QR escaneado.</li>
+      <li>El botón <strong>Cancelar</strong> descarta los cambios y regresa a la pantalla anterior sin guardar nada.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="separador-seccion"></div>
+
+<div class="content" id="mostrart">
+  <h1>Mostrar Todos Los Datos</h1>
+  <div class="info-box">
+    <h2>¿Qué puedes hacer aquí?</h2>
+    <ul>
+      <li>Visualizar todos los datos registrados en una tabla.</li>
+      <li>Filtrar los resultados por matrícula.</li>
+      <li>Filtrar los datos por estado.</li>
+      <li>Filtrar por empleado responsable.</li>
+    </ul>
+  </div>
+  <div class="section-box">
+    <h2>¿Cómo Ver todos los datos?</h2>
+    <div class="bloque-vertical">
+      <div class="texto-superior">
+        <p>Al pulsar el botón <strong>"Mostrar Todos los Datos"</strong>, se abrirá una tabla que muestra todas las bobinas registradas en el sistema.</p>
+        <ul>
+          <li>Si has realizado algún filtrado, puedes volver a mostrar todos los resultados simplemente borrando el texto del campo de búsqueda. La tabla se actualizará automáticamente en tiempo real.</li>
+        </ul>
+      </div>
+      <div class="tabla-ancha">
+        <img class="tabla" src="../../img/TodoF.jpg" alt="TodoF" />
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Filtrar por Matrícula</h2>
+    <div class="bloque-vertical">
+      <div class="texto-superior">
+        <ul>
+          <li><strong>Si la matrícula existe:</strong> se mostrarán los datos correspondientes.</li>
+          <li><strong>Si la matrícula no existe:</strong> la tabla aparecerá vacía.</li>
+        </ul>
+      </div>
+      <div class="tabla-ancha">
+        <img class="tabla" src="../../img/MatF.jpg" alt="MatF" />
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Filtrado por Estado</h2>
+    <div class="bloque-vertical">
+      <div class="texto-superior">
+        <p>Podrás visualizar únicamente las bobinas en los siguientes estados:</p>
+        <ul>
+          <li><strong>Recibido:</strong> bobinas recién registradas.</li>
+          <li><strong>Para Devolver:</strong> pendientes de devolución.</li>
+          <li><strong>Devuelto:</strong> ya devueltas y archivadas.</li>
+        </ul>
+      </div>
+      <div class="tabla-ancha">
+        <img class="tabla" src="../../img/EstF.jpg" alt="NomF" />
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Filtrar por Empleado</h2>
+    <div class="bloque-vertical">
+      <div class="texto-superior">
+        <ul>
+          <li><strong>Si el empleado existe:</strong> se mostrarán sus bobinas.</li>
+          <li><strong>Si no existe:</strong> la tabla no mostrará resultados.</li>
+        </ul>
+      </div>
+      <div class="tabla-ancha">
+        <img class="tabla" src="../../img/NomF.jpg" alt="NomF" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="separador-seccion"></div>
+
+<div class="content" id="mostrarpd">
+  <h1>Mostrar Bobinas a Devolver</h1>
+  <div class="info-box">
+    <h2>¿Qué puedes hacer aquí?</h2>
+    <ul>
+      <li>Visualizar los datos en estado Para Devolver.</li>
+      <li>Filtrar por matrícula o empleado responsable.</li>
+    </ul>
+  </div>
+  <div class="section-box">
+    <h2>¿Cómo Ver todos los datos?</h2>
+    <div class="bloque-vertical">
+      <div class="texto-superior">
+        <p>Al pulsar <strong>"Mostrar Bobinas a Devolver"</strong>, verás las bobinas en dicho estado.</p>
+        <ul>
+          <li>Para quitar filtros, borra el campo de búsqueda.</li>
+        </ul>
+      </div>
+      <div class="tabla-ancha">
+        <img class="tabla" src="../../img/PdF.jpg" alt="TodoF" />
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Filtrar por Matrícula</h2>
+    <div class="bloque-vertical">
+      <div class="texto-superior">
+        <ul>
+          <li><strong>Si existe:</strong> se mostrarán las bobinas correspondientes con estado Para Devolver.</li>
+          <li><strong>Si no existe:</strong> la tabla aparecerá vacía.</li>
+        </ul>
+      </div>
+      <div class="tabla-ancha">
+        <img class="tabla" src="../../img/PdMatF.jpg" alt="MatF" />
+      </div>
+    </div>
+  </div>
+  <div class="section-box">
+    <h2>Filtrar por Empleado</h2>
+    <div class="bloque-vertical">
+      <div class="texto-superior">
+        <ul>
+          <li><strong>Si existe:</strong> verás todas sus bobinas en estado Para Devolver.</li>
+          <li><strong>Si no existe:</strong> no aparecerán resultados.</li>
+        </ul>
+      </div>
+      <div class="tabla-ancha">
+        <img class="tabla" src="../../img/PdNomF.jpg" alt="NomF" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-image">
+  <img src="../../img/Footer.png" alt="Pie de página" />
+</div>
+</body>
+</html>
