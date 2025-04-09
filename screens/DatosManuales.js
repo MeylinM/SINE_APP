@@ -29,6 +29,8 @@ import {
   agregarProducto,
 } from "../services/ProductoServices";
 import { registrarUsuarioProducto } from "../services/UsuarioRegistroServices";
+import { BackHandler } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function DatosManuales({ navigation }) {
   // Estados del formulario
@@ -62,6 +64,17 @@ export default function DatosManuales({ navigation }) {
   const [observacionesOriginales, setObservacionesOriginales] = useState("");
   const [obsNueva, setObsNueva] = useState("");
   const [estadoBase, setEstadoBase] = useState("");
+  useFocusEffect(
+    React.useCallback(() => {
+      const bloquearAtras = () => true; // 🔒 evita salir con botón físico
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        bloquearAtras
+      );
+
+      return () => backHandler.remove(); // limpia al salir de pantalla
+    }, [])
+  );
 
   useEffect(() => {
     const comprobarUsuariosActivos = async () => {
@@ -354,16 +367,22 @@ export default function DatosManuales({ navigation }) {
       }
 
       // Registrar estado con ID correcto
-      const usuarioProductoRegistrado = await registrarUsuarioProducto(
-        id_user,
-        productoIdFinal,
-        estadoCapitalizado,
-        fecha
-      );
+      if (estadoBase.toLowerCase() !== estado.toLowerCase()) {
+        const usuarioProductoRegistrado = await registrarUsuarioProducto(
+          id_user,
+          productoIdFinal,
+          estadoCapitalizado,
+          fecha
+        );
 
-      if (!usuarioProductoRegistrado) {
-        Alert.alert("Error", "No se pudo registrar el estado del producto.");
-        return;
+        if (!usuarioProductoRegistrado) {
+          Alert.alert("Error", "No se pudo registrar el estado del producto.");
+          return;
+        }
+      } else {
+        console.log(
+          "ℹ️ Estado sin cambios. Solo se actualizaron observaciones."
+        );
       }
 
       Alert.alert("✅ Éxito", "Datos guardados correctamente.");
@@ -926,7 +945,12 @@ export default function DatosManuales({ navigation }) {
           />
           <Button
             title="Cancelar"
-            onPress={() => navigation.navigate("Home")}
+            onPress={() =>
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Home" }],
+              })
+            }
             color="#FF3B30"
           />
         </View>

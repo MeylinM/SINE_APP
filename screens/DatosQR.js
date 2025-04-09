@@ -16,7 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { getCurrentDateTime } from "../utils/DateHelper";
 import { styles } from "../styles/FormStyles";
-import { DataContext } from "./DataContext";
+import { BackHandler } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 import {
   obtenerAlmacenes,
@@ -34,7 +35,6 @@ import { registrarUsuarioProducto } from "../services/UsuarioRegistroServices";
 
 export default function DatosQR({ route, navigation }) {
   const { qrData } = route.params; // <- ID del producto
-  const { datosGuardados, setDatosGuardados } = useContext(DataContext);
 
   // Estado igual a DatosManuales
   const [id, setId] = useState("");
@@ -68,6 +68,18 @@ export default function DatosQR({ route, navigation }) {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevaObservacion, setNuevaObservacion] = useState("");
   const [estadoBase, setEstadoBase] = useState("");
+  useFocusEffect(
+    React.useCallback(() => {
+      const bloquearAtras = () => true; // 🔒 evita salir con botón físico
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        bloquearAtras
+      );
+
+      return () => backHandler.remove(); // limpia al salir de pantalla
+    }, [])
+  );
+
   useEffect(() => {
     if (qrData) {
       validarQR();
@@ -313,16 +325,22 @@ export default function DatosQR({ route, navigation }) {
       }
 
       // Registrar estado con ID correcto
-      const usuarioProductoRegistrado = await registrarUsuarioProducto(
-        id_user,
-        productoIdFinal,
-        estadoCapitalizado,
-        fecha
-      );
+      if (estadoBase.toLowerCase() !== estado.toLowerCase()) {
+        const usuarioProductoRegistrado = await registrarUsuarioProducto(
+          id_user,
+          productoIdFinal,
+          estadoCapitalizado,
+          fecha
+        );
 
-      if (!usuarioProductoRegistrado) {
-        Alert.alert("Error", "No se pudo registrar el estado del producto.");
-        return;
+        if (!usuarioProductoRegistrado) {
+          Alert.alert("Error", "No se pudo registrar el estado del producto.");
+          return;
+        }
+      } else {
+        console.log(
+          "ℹ️ Estado sin cambios. Solo se actualizaron observaciones."
+        );
       }
 
       Alert.alert("✅ Éxito", "Datos guardados correctamente.");
@@ -952,7 +970,12 @@ export default function DatosQR({ route, navigation }) {
           />
           <Button
             title="Cancelar"
-            onPress={() => navigation.navigate("Home")}
+            onPress={() =>
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Home" }],
+              })
+            }
             color="#FF3B30"
           />
         </View>

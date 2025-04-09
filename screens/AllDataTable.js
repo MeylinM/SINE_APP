@@ -12,10 +12,12 @@ import * as ScreenOrientation from "expo-screen-orientation";
 import ModalSelector from "react-native-modal-selector";
 import { Ionicons } from "@expo/vector-icons";
 import { obtenerHistorialProductos } from "../services/ProductoServices";
-
+import { BackHandler } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 export default function AllDataTable() {
   const [historialProductos, setHistorialProductos] = useState([]);
-
+  const navigation = useNavigation();
   const [estadoSeleccionado, setEstadoSeleccionado] = useState("All");
   const [matriculaBusqueda, setMatriculaBusqueda] = useState("");
   const [empleadoBusqueda, setEmpleadoBusqueda] = useState("");
@@ -26,6 +28,24 @@ export default function AllDataTable() {
     { key: "Para devolver", label: "Para Devolver" },
     { key: "Devuelto", label: "Devuelto" },
   ];
+  useFocusEffect(
+    React.useCallback(() => {
+      const handleBackPress = () => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        });
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
 
   useEffect(() => {
     const cambiarOrientacion = async () => {

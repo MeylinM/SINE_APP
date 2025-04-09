@@ -1,21 +1,36 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, ScrollView, TextInput } from "react-native";
 
 import styles from "../styles/TableStyle";
 import * as ScreenOrientation from "expo-screen-orientation";
-import { Ionicons } from "@expo/vector-icons";
+import { BackHandler } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { obtenerHistorialProductos } from "../services/ProductoServices";
 
 export default function ParaDevolverTabla() {
   const [historialProductos, setHistorialProductos] = useState([]);
   const [matriculaBusqueda, setMatriculaBusqueda] = useState("");
   const [empleadoBusqueda, setEmpleadoBusqueda] = useState("");
+  const navigation = useNavigation();
+  useFocusEffect(
+    React.useCallback(() => {
+      const handleBackPress = () => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        });
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
 
   useEffect(() => {
     const cambiarOrientacion = async () => {
