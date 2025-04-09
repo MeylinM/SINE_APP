@@ -1,10 +1,10 @@
-const API_URL = "https://sineserver-production.up.railway.app/usuario/activos";
+import { API_USUARIO } from "../Config/Config";
 
 // Obtener todos los empleados desde la base de datos
 export const obtenerEmpleados = async () => {
   try {
     console.log("Obteniendo empleados desde la base de datos...");
-    const response = await fetch(API_URL);
+    const response = await fetch(API_USUARIO);
 
     if (!response.ok) {
       throw new Error(`Error HTTP: ${response.status}`);

@@ -1,10 +1,10 @@
-const API_URL = "https://sineserver-production.up.railway.app/almacen";
+import { API_ALMACEN } from "../Config/Config";
 
 // Obtener todos los almacenes
 export const obtenerAlmacenes = async () => {
   try {
     console.log("🔹 Obteniendo almacenes desde la base de datos...");
-    const response = await fetch(`${API_URL}/activos`);
+    const response = await fetch(`${API_ALMACEN}/activos`);
 
     if (!response.ok) {
       console.error("❌ Error HTTP al obtener almacenes:", response.status);
@@ -21,7 +21,7 @@ export const obtenerAlmacenes = async () => {
 };
 export const obtenerTodosLosAlmacenes = async () => {
   try {
-    const response = await fetch(`${API_URL}`); // sin `/activos`
+    const response = await fetch(`${API_ALMACEN}`); // sin `/activos`
     if (!response.ok) {
       console.error(
         "❌ Error HTTP al obtener todos los almacenes:",
@@ -41,7 +41,7 @@ export const obtenerTodosLosAlmacenes = async () => {
 export const obtenerAlmacenPorID = async (id) => {
   try {
     console.log(`🔹 Obteniendo almacén con ID: ${id}`);
-    const response = await fetch(`${API_URL}/${id}`);
+    const response = await fetch(`${API_ALMACEN}/${id}`);
 
     if (!response.ok) {
       console.error(
@@ -64,7 +64,7 @@ export const obtenerAlmacenPorID = async (id) => {
 export const agregarAlmacen = async (nombre) => {
   try {
     console.log(`🔹 Intentando agregar almacén: ${nombre}`);
-    const response = await fetch(API_URL, {
+    const response = await fetch(API_ALMACEN, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nombre }),

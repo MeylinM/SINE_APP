@@ -1,10 +1,10 @@
-const API_URL = "https://sineserver-production.up.railway.app/obra";
+import { API_OBRA } from "../Config/Config";
 
 // Obtener todas las obras
 export const obtenerOtObras = async () => {
   try {
     console.log("🔹 Obteniendo obras desde la base de datos...");
-    const response = await fetch(API_URL);
+    const response = await fetch(API_OBRA);
 
     if (!response.ok) {
       console.error("❌ Error HTTP al obtener obras:", response.status);
@@ -24,7 +24,7 @@ export const obtenerOtObras = async () => {
 export const obtenerObraPorOT = async (ot) => {
   try {
     console.log(`🔹 Obteniendo obra con OT: ${ot}`);
-    const response = await fetch(`${API_URL}/${ot}`);
+    const response = await fetch(`${API_OBRA}/${ot}`);
 
     if (!response.ok) {
       console.error(`❌ Error HTTP al obtener obra OT ${ot}:`, response.status);
@@ -46,7 +46,7 @@ export const agregarObra = async (ot, descripcion) => {
     console.log(
       `🔹 Intentando agregar obra: OT ${ot}, Descripción: ${descripcion}`
     );
-    const response = await fetch(API_URL, {
+    const response = await fetch(API_OBRA, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ot, descripcion }),

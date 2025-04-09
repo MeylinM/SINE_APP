@@ -1,4 +1,4 @@
-const API_URL = "https://sineserver-production.up.railway.app/usuario_producto";
+import { API_USUARIO_PRODUCTO } from "../Config/Config";
 
 export const registrarUsuarioProducto = async (
   id_user,
@@ -29,7 +29,7 @@ export const registrarUsuarioProducto = async (
 
     console.log("📌 Registrando datos en UsuarioProducto:", dataToSend);
 
-    const response = await fetch(API_URL, {
+    const response = await fetch(API_USUARIO_PRODUCTO, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dataToSend),

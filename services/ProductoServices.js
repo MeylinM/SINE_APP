@@ -1,5 +1,4 @@
-const API_HISTORIAL = "https://sineserver-production.up.railway.app/historial"; // Para obtener historial de productos
-const API_PRODUCTO = "https://sineserver-production.up.railway.app/producto"; // Para insertar y actualizar productos
+import { API_HISTORIAL, API_PRODUCTO } from "../Config/Config";
 
 export const obtenerProductoPorId = async (id) => {
   try {
