@@ -1,4 +1,4 @@
-import { API_USUARIO_PRODUCTO } from "../Config/Config";
+import { API_USUARIO_PRODUCTO } from "../config/Config";
 
 export const registrarUsuarioProducto = async (
   id_user,

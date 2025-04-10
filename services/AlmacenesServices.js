@@ -1,4 +1,4 @@
-import { API_ALMACEN } from "../Config/Config";
+import { API_ALMACEN } from "../config/Config";
 
 // Obtener todos los almacenes
 export const obtenerAlmacenes = async () => {

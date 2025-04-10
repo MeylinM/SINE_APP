@@ -1,23 +1,34 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  StyleSheet,
-  AppState,
-  Alert,
-  BackHandler,
-  Text,
-} from "react-native";
+import { StyleSheet, AppState, Alert, BackHandler } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Overlay from "../styles/Overlay";
-
+import { useFocusEffect } from "@react-navigation/native";
 export default function Camara({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const qrLock = useRef(false);
   const appState = useRef(AppState.currentState);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const handleBackPress = () => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        });
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
   useEffect(() => {
     if (!permission || !permission.granted) {
       requestPermission();
@@ -82,12 +93,10 @@ export default function Camara({ navigation }) {
   };
 
   return (
-    <SafeAreaView
-      style={[StyleSheet.absoluteFillObject, { backgroundColor: "black" }]}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: "black" }}>
       <StatusBar hidden />
       <CameraView
-        style={StyleSheet.absoluteFillObject}
+        style={{ flex: 1 }}
         facing="back"
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
       />

@@ -1,4 +1,4 @@
-import { API_OBRA } from "../Config/Config";
+import { API_OBRA } from "../config/Config";
 
 // Obtener todas las obras
 export const obtenerOtObras = async () => {

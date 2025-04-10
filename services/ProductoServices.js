@@ -1,4 +1,4 @@
-import { API_HISTORIAL, API_PRODUCTO } from "../Config/Config";
+import { API_HISTORIAL, API_PRODUCTO } from "../config/Config";
 
 export const obtenerProductoPorId = async (id) => {
   try {

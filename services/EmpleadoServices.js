@@ -1,4 +1,4 @@
-import { API_USUARIO } from "../Config/Config";
+import { API_USUARIO } from "../config/Config";
 
 // Obtener todos los empleados desde la base de datos
 export const obtenerEmpleados = async () => {
