@@ -1,14 +1,13 @@
 {
   "expo": {
-    "name": "SENA_App",
+    "name": "Gestion de bobinas Sine",
     "slug": "SENA_App",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/LogoB.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,12 +16,24 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/LogoB.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "CAMERA"
+      ],
+      "package": "com.egoitz.SineQR"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/LogoB.png"
+    },
+    "plugins": [
+      "expo-camera"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6fac7628-0832-49ba-abed-ee283c017445"
+      }
     }
   }
 }

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Escaneo de QR - Manual SINE</title>
+    <link rel="icon" type="image/png" href="../../assets/sine_logo.png" />
+    <link rel="stylesheet" href="../css/BobinaCL.css" />
+  </head>
+  <body>
+    <div class="header-image">
+      <img src="../../assets/Header.png" alt="Encabezado" />
+    </div>
+
+    <h1>ESCANEO DE QR</h1>
+
+    <div class="info-box">
+      <h2>¿Qué puedes hacer aquí?</h2>
+      <ul>
+        <li>Escanear un código QR.</li>
+        <li>Introducir información desde cero.</li>
+        <li>Modificar información existente.</li>
+      </ul>
+    </div>
+
+    <div class="section-box">
+      <h2>¿Cómo escanear el QR?</h2>
+    
+      <div class="image-layout">
+        <div class="image-box">
+          <img src="../../assets/EscanerQR.jpg" alt="Escanear QR" />
+          <img src="../../assets/Confirmacion.jpg" alt="Confirmación" />
+        </div>
+    
+        <div class="image-text">
+          <p>
+            Después de pulsar <strong>"ESCANEAR QR"</strong>, enfoca el código con la cámara.<br />
+            Aparecerá un mensaje de confirmación para asegurarte de que es el código correcto<br />
+            y evitar escaneos accidentales.
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    
+
+    <div class="section-box">
+      <h2>Introducir o modificar bobinas</h2>
+    
+      <div class="image-layout">
+        <!-- 📷 Imágenes a la izquierda -->
+        <div class="image-box">
+          <img src="../../assets/Formulario1.jpg" alt="Formulario 1" />
+          <img src="../../assets/Formulario2.jpg" alt="Formulario 2" />
+        </div>
+    
+        <!-- ✅ Listado a la derecha -->
+        <div class="image-text">
+          <ul>
+            <li>
+              <strong>Si la bobina ya existe:</strong> se cargarán automáticamente los datos guardados previamente. 
+              Solo se podrán modificar los campos habilitados según el estado actual:
+              <ul>
+                <li>
+                  <strong>Para Devolver:</strong> se podrán editar los campos <strong>Información Para Devolver</strong> y <strong>Observaciones</strong>.
+                </li>
+                <li>
+                  <strong>Devuelto:</strong> se podrán editar los campos <strong>Información Devuelto</strong> y <strong>Observaciones</strong>.
+                </li>
+                <li>
+                  El botón <strong>Agregar Observaciones</strong> siempre estará disponible, sin importar el estado.<br />
+                  Al pulsarlo, se abrirá un recuadro donde podrás añadir una nueva observación.
+                  <ul>
+                    <li>El botón <strong>Agregar</strong> guarda en la lista la observación escrita.</li>
+                    <li>El botón <strong>Cancelar</strong> permite descartar el texto en caso de error o si decides no añadir nada.</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Si la bobina no existe:</strong> se introducirán los datos desde cero, basados en el código QR escaneado.
+              Se podrán rellenar todos los campos correspondientes al estado <strong>Recibido</strong>, excepto los reservados para estados posteriores.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+
+    <div class="section-box">
+      <h2>Botones Guardar, Limpiar y Cancelar</h2>
+      <ul>
+        <li>
+          El botón <strong>Guardar</strong> almacena de forma definitiva la información introducida.
+          Hasta que se pulsa este botón, los datos no se guardan.
+        </li>
+        <li>
+          El botón <strong>Limpiar</strong> borra todos los campos del formulario, excepto el código QR escaneado, que se mantiene visible.
+        </li>
+        <li>
+          El botón <strong>Cancelar</strong> descarta los cambios y regresa a la pantalla anterior sin guardar nada.
+        </li>
+      </ul>
+    </div>
+    
+    <h2 class="volver-indice"><a href="Index.html" >Volver al índice</a></h2>
+
+    <div class="footer-image">
+      <img src="../../assets/Footer.png" alt="Pie de página" />
+    </div>
+  </body>
+</html>
