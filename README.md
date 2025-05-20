@@ -164,3 +164,11 @@ Repositorio oficial:
 
 Este software es de uso **privado**.  
 No está autorizado su uso, copia ni distribución fuera del entorno autorizado por SINE Ingeniería.
+
+## 🔗 Repositorios relacionados
+
+- _Servidor backend (SINE_Server):_  
+  👉 [https://github.com/JulenHidalgo/sine-server](https://github.com/JulenHidalgo/sine-server)
+
+- _Aplicación cliente (SINE_APP):_  
+  👉 [https://github.com/MeylinM/SINE_APP](https://github.com/MeylinM/SINE_APP)
